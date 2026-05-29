@@ -13,6 +13,7 @@ compile_commands.json
 CTestTestfile.cmake
 Testing/
 .idea/
+.clang-format
 
 # Local executables and libraries
 /ticket_system
@@ -23,6 +24,7 @@ Testing/
 *.so
 *.dylib
 *.dll
+run-test
 
 # Editor and OS files
 .idea/
