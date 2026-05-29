@@ -1,8 +1,37 @@
-//
-// Created by lenovo on 2026/5/29.
-//
+#ifndef TICKET_SYSTEM_2026_TICKET_SYSTEM_H
+#define TICKET_SYSTEM_2026_TICKET_SYSTEM_H
+#include <parser.h>
+#include <string>
+#include<vector>
+namespace sjtu{
 
-#ifndef TICKET_SYSTEM_2026_1_TICKET_SYSTEM_H
-#define TICKET_SYSTEM_2026_1_TICKET_SYSTEM_H
+class TicketSystem {
+public:
+    TicketSystem();
+    ~TicketSystem();
+    void run();
 
-#endif // TICKET_SYSTEM_2026_1_TICKET_SYSTEM_H
+
+private:
+    bool handle_add_user(const parsedCommand &command, std::vector<std::string> &output_lines);
+    bool handle_login(const parsedCommand &command, std::vector<std::string> &output_lines);
+    bool handle_logout(const parsedCommand &command, std::vector<std::string> &output_lines);
+    bool handle_query_profile(const parsedCommand &command, std::vector<std::string> &output_lines);
+    bool handle_modify_profile(const parsedCommand &command, std::vector<std::string> &output_lines);
+    bool handle_add_train(const parsedCommand &command, std::vector<std::string> &output_lines);
+    bool handle_delete_train(const parsedCommand &command, std::vector<std::string> &output_lines);
+    bool handle_release_train(const parsedCommand &command, std::vector<std::string> &output_lines);
+    bool handle_query_train(const parsedCommand &command, std::vector<std::string> &output_lines);
+    bool handle_query_ticket(const parsedCommand &command, std::vector<std::string> &output_lines);
+    bool handle_query_transfer(const parsedCommand &command, std::vector<std::string> &output_lines);
+    bool handle_buy_ticket(const parsedCommand &command, std::vector<std::string> &output_lines);
+    bool handle_query_order(const parsedCommand &command, std::vector<std::string> &output_lines);
+    bool handle_refund_ticket(const parsedCommand &command, std::vector<std::string> &output_lines);
+
+    bool excute(parsedCommand &command, std::vector<std::string> output);
+
+};
+
+}
+
+#endif // TICKET_SYSTEM_2026_TICKET_SYSTEM_H

@@ -1,0 +1,8 @@
+//
+// Created by lenovo on 2026/5/30.
+//
+
+#ifndef TICKET_SYSTEM_2026_1_FILE_MANEGER_H
+#define TICKET_SYSTEM_2026_1_FILE_MANEGER_H
+
+#endif // TICKET_SYSTEM_2026_1_FILE_MANEGER_H
