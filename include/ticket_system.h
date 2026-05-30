@@ -1,8 +1,8 @@
 #ifndef TICKET_SYSTEM_2026_TICKET_SYSTEM_H
 #define TICKET_SYSTEM_2026_TICKET_SYSTEM_H
-#include <parser.h>
 #include <string>
-#include<vector>
+#include <util/parser.h>
+#include <vector>
 namespace sjtu{
 
 class TicketSystem {
@@ -28,7 +28,7 @@ private:
     bool handle_query_order(const parsedCommand &command, std::vector<std::string> &output_lines);
     bool handle_refund_ticket(const parsedCommand &command, std::vector<std::string> &output_lines);
 
-    bool excute(parsedCommand &command, std::vector<std::string> output);
+    bool excute(parsedCommand &command, std::vector<std::string> &output);
 
 };
 

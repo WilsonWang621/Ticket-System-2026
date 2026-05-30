@@ -3,7 +3,7 @@
 namespace sjtu{
     bool TicketSystem::excute(parsedCommand& command, std::vector<std::string> output) {
         if (command.command_name == "add_user") {
-            return handle_add_train(command, output);
+            return handle_add_user(command, output);
         }
         if (command.command_name == "login") {
             return handle_login(command, output);
@@ -41,7 +41,7 @@ namespace sjtu{
         if (command.command_name == "query_order") {
             return handle_query_order(command, output);
         }
-        if (command.command_name == "refund") {
+        if (command.command_name == "refund_ticket") {
             return handle_refund_ticket(command, output);
         }
 

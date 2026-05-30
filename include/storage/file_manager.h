@@ -70,7 +70,7 @@ namespace sjtu {
             return !file_.fail();
         }
 
-        bool read_slot(int index, Slot& slot) {
+        bool read_slot(int index, Slot& slot) const{
             if (!opened_ || !file_.is_open() || index < 0 || index >= header_.total_slots) {
                 return false;
             }
@@ -206,7 +206,13 @@ namespace sjtu {
             if (index == -1) {
                 return -1;
             }
-            if (!write_slot(index, record)) {
+            Slot slot{};
+            if (!read_slot(index, slot) || !slot.active) {
+                return -1;
+            }
+            slot.record = record;
+
+            if (!write_slot(index, slot)) {
                 return -1;
             }
             return index;
@@ -223,11 +229,11 @@ namespace sjtu {
 
         bool write(int index, Record& record) {  //modify修改
             Slot slot;
-            if (!write_slot(index, slot) || slot.active == 0) {
+            if (!read_slot(index, slot) || !slot.active) {
                 return false;
             }
             slot.record = record;
-            return true;
+            return write_slot(index, slot);
         }
 
         int record_count() const {

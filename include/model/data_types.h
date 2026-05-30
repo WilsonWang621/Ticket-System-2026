@@ -97,5 +97,15 @@ namespace sjtu {
         int stationIndex = -1;
     };
 
+    struct ProfileUpdateRequest { //modify_profile
+        bool change_password = false;
+        bool change_name = false;
+        bool change_mail = false;
+        bool change_privilege = false;
+        char password[kMaxPasswordLength + 1]{};
+        char name[kMaxNameBytes + 1]{};
+        char mail[kMaxMailLength + 1]{};
+        int privilege = 0;
+    };
 }
 #endif // TICKET_SYSTEM_2026_1_DATA_TYPES_H
