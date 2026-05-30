@@ -16,16 +16,14 @@ namespace sjtu {
     constexpr int kMaxStationNameBytes = 40;
 
     enum class TicketSOrtPolicy{  // -p cost time
-        byTime, byCost
+        byTime,
+        byCost
     };
 
-    struct UserProfile {
-        char username[kMaxNameBytes + 1]{};
-        char password[kMaxPasswordLength + 1]{};
-        char name[kMaxNameBytes + 1]{};
-        char mailAddr[kMaxMailLength + 1]{};
-        int privilege = 0;
-        bool deleted = false;
+    enum class State {
+        Success,
+        Pending,
+        Failed
     };
 
     struct Date {
@@ -41,6 +39,15 @@ namespace sjtu {
     struct DateTime {
         Date date;
         ClockTime time;
+    };
+
+    struct UserProfile {
+        char username[kMaxNameBytes + 1]{};
+        char password[kMaxPasswordLength + 1]{};
+        char name[kMaxNameBytes + 1]{};
+        char mailAddr[kMaxMailLength + 1]{};
+        int privilege = 0;
+        bool deleted = false;
     };
 
     struct TrainRecord {
@@ -64,8 +71,30 @@ namespace sjtu {
 
 
     struct SeatRecord {
+        int trainId = -1;
+        Date date;
         int remain[kMaxSegmentNum]{};
+    };
 
+    struct OrderRecord {
+        char username[kMaxUsernameLength + 1]{};
+        char trainID[kMaxTrainIdLength + 1]{};
+
+        int timestamp = -1;
+        int num = 0;
+        int price = 0;
+        DateTime time;
+        int fromIndex = -1;
+        int toIndex = -1;
+
+        State status = State::Success;
+    };
+
+    struct StationTrainRecord {  //给 query_ticket 和 query_transfer 用的辅助索引
+        char station[kMaxStationNum + 1]{};
+        char trainID[kMaxTrainIdLength + 1]{};
+        int trainRecordId = -1;
+        int stationIndex = -1;
     };
 
 }
