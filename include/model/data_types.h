@@ -15,7 +15,7 @@ namespace sjtu {
     constexpr int kMaxSegmentNum = kMaxStationNum - 1;
     constexpr int kMaxStationNameBytes = 40;
 
-    enum class TicketSOrtPolicy{  // -p cost time
+    enum class TicketSortPolicy{  // -p cost time
         byTime,
         byCost
     };
@@ -106,6 +106,50 @@ namespace sjtu {
         char name[kMaxNameBytes + 1]{};
         char mail[kMaxMailLength + 1]{};
         int privilege = 0;
+    };
+
+    struct TrainStationView {
+        char station_name[kMaxStationNameBytes + 1]{};
+        DateTime arriving;
+        DateTime leaving;
+        int price_from_start = 0;
+        int seat_to_next = 0;
+        bool has_arriving_time = false;
+        bool has_leaving_time = false;
+        bool has_seat_to_next = false;
+    };
+
+    struct TrainQueryView { //query_train
+        char train_id[kMaxTrainIdLength + 1]{};
+        char type{};
+        int station_num = 0;
+        TrainStationView stations[kMaxStationNum];
+    };
+
+    struct TicketQueryRequest {
+        char from[kMaxStationNameBytes + 1]{};
+        char to[kMaxStationNameBytes + 1]{};
+        Date departure_date;
+        TicketSortPolicy sort_policy = TicketSortPolicy::byTime;
+    };
+
+    struct TicketQueryResult {
+        char train_id[kMaxTrainIdLength + 1]{};
+        char from[kMaxStationNameBytes + 1]{};
+        char to[kMaxStationNameBytes + 1]{};
+        DateTime leaving;
+        DateTime arriving;
+        int price = 0;
+        int seat = 0;
+        int total_time = 0;
+    };
+
+    struct TransferQueryResult {
+        bool exists = false;
+        TicketQueryResult first;
+        TicketQueryResult second;
+        int total_price = 0;
+        int total_time = 0;
     };
 }
 #endif // TICKET_SYSTEM_2026_1_DATA_TYPES_H

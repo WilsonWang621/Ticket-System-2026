@@ -20,6 +20,36 @@ namespace sjtu {
         user_index_ = nullptr;
     }
 
+    bool UserService::init(const std::string &data_dir) {
+        data_dir_ = data_dir;
+        initialized_ = user_file_.open("ts_users.dat");
+        delete user_index_;
+        user_index_ = new BPT<Data>("ts_user_index");
+        logged_in_.clear();
+        return initialized_;
+    }
+
+    void UserService::reset_index_file() {
+        delete user_index_;
+        user_index_ = nullptr;
+        std::remove("init_ts_user_index");
+        std::remove("data_ts_user_index");
+        user_index_ = new BPT<Data>("ts_user_index");
+    }
+
+    void UserService::clear() {
+        if (!initialized_) {
+            return;
+        }
+        user_file_.clear();
+        reset_index_file();
+        logged_in_.clear();
+    }
+
+    void UserService::clear_runtime_state() {
+        logged_in_.clear();
+    }
+
     bool UserService::find_user_offset(const std::string& username, int& offset) const {
         if (user_index_ == nullptr) {
             return false;

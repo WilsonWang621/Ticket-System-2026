@@ -16,6 +16,12 @@ namespace sjtu {
         TrainService();
         ~TrainService();
 
+        bool add_train(const TrainRecord &train);
+        bool delete_train(const std::string &trainID);
+        bool release_train(const std::string& trainID);
+        bool query_train(const std::string &train_id, const sjtu::Date &date, TrainQueryView &result) const;
+        bool query_ticket(const std::string &train_id, const Date &date, std::vector<TicketQueryResult>& results) const;
+        bool query_transfer(TicketQueryRequest &request, std::vector<TransferQueryResult>& results) const;
     private:
 
     };

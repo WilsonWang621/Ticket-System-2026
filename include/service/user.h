@@ -13,6 +13,10 @@ namespace sjtu {
         UserService();
         ~UserService();
 
+        bool init(const std::string &data_dir);
+        void clear();
+        void clear_runtime_state();
+
         bool is_logged_in(const std::string &username) const;
         bool get_user(const std::string &username, UserProfile &user) const;
         int get_privilege(const std::string &username) const;
@@ -32,6 +36,7 @@ namespace sjtu {
         std::map<std::string, bool> logged_in_; //登陆过哪些
 
         bool find_user_offset(const std::string &username, int &offset) const;
+        void reset_index_file();
     };
 }
 
