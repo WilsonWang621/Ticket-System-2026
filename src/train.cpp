@@ -382,27 +382,25 @@ namespace sjtu {
 
     bool TrainService::query_ticket(const TicketQueryRequest& request, std::vector<TicketQueryResult>& results) const {
         results.clear();
-        std::vector<Data> station_matches;
-        station_index_->range_query(Data(request.from, INT_MIN), Data(request.from, INT_MAX), station_matches);
-        results.reserve(station_matches.size());
 
-        for (int i = 0; i < station_matches.size(); i++) {
-            const int packed = station_matches[i].value;
-            const int train_offset = unpack_train_offset(packed);
-            const int from_idx = unpack_station_index(packed);
+        std::vector<Data> from_matches;
+        std::vector<Data> to_matches;
+        station_index_->range_query(Data(request.from, INT_MIN), Data(request.from, INT_MAX), from_matches);
+        station_index_->range_query(Data(request.to, INT_MIN), Data(request.to, INT_MAX), to_matches);
 
-            TrainRecord train;
-            if (!train_file_.read(train_offset, train)) {
-                continue;
-            }
-            int to_idx = -1;
-            if (!locate_station(train_offset, train, request.to, to_idx) || from_idx >= to_idx) {
-                continue;
+        results.reserve(std::min(from_matches.size(), to_matches.size()));
+
+        const bool enumerate_from = from_matches.size() <= to_matches.size();
+        const std::vector<Data> &candidate_matches = enumerate_from ? from_matches : to_matches;
+
+        auto evaluate_candidate = [&](int train_offset, TrainRecord &train, int from_idx, int to_idx) {
+            if (from_idx >= to_idx) {
+                return;
             }
 
             const int running_date = resolve_running_date(train, from_idx, request.departure_date);
             if (running_date == -1) {
-                continue;
+                return;
             }
 
             int seat = train.seatNum;
@@ -415,6 +413,32 @@ namespace sjtu {
             TicketQueryResult item;
             fill_ticket_result(train, from_idx, to_idx, running_date, seat, item);
             results.push_back(item);
+        };
+
+        for (std::size_t i = 0; i < candidate_matches.size(); ++i) {
+            const int packed = candidate_matches[i].value;
+            const int train_offset = unpack_train_offset(packed);
+            const int source_idx = unpack_station_index(packed);
+
+            TrainRecord train;
+            if (!train_file_.read(train_offset, train)) {
+                continue;
+            }
+
+            if (enumerate_from) {
+                int to_idx = -1;
+                if (!locate_station(train_offset, train, request.to, to_idx)) {
+                    continue;
+                }
+                evaluate_candidate(train_offset, train, source_idx, to_idx);
+            }
+            else {
+                int from_idx = -1;
+                if (!locate_station(train_offset, train, request.from, from_idx)) {
+                    continue;
+                }
+                evaluate_candidate(train_offset, train, from_idx, source_idx);
+            }
         }
 
         if (!results.empty()) {
@@ -429,35 +453,29 @@ namespace sjtu {
     }
 
     bool TrainService::query_transfer(const TicketQueryRequest& request, TransferQueryResult& result) const {
+        result = {};
+
         std::vector<Data> from_matches;
+        std::vector<Data> to_matches;
         station_index_->range_query(Data(request.from, INT_MIN), Data(request.from, INT_MAX), from_matches);
-        if (from_matches.empty()) {
+        station_index_->range_query(Data(request.to, INT_MIN), Data(request.to, INT_MAX), to_matches);
+        if (from_matches.empty() || to_matches.empty()) {
             return false;
         }
 
-        std::unordered_map<std::string, std::vector<int>> station_cache;
-        station_cache.reserve(from_matches.size());
+        struct SecondLegCandidate {
+            int train_offset = -1;
+            int transfer_index = -1;
+            int destination_index = -1;
+        };
+
+        std::unordered_map<std::string, std::vector<SecondLegCandidate>> second_by_station;
+        second_by_station.reserve(to_matches.size() * 4 + 1);
 
         constexpr std::size_t kTransferTrainCacheLimit = 64;
         std::list<std::pair<int, TrainRecord>> train_cache_lru;
         std::unordered_map<int, std::list<std::pair<int, TrainRecord>>::iterator> train_cache;
         train_cache.reserve(kTransferTrainCacheLimit);
-
-        auto load_station_candidates = [&](const std::string &station_name) -> const std::vector<int> & {
-            auto found = station_cache.find(station_name);
-            if (found != station_cache.end()) {
-                return found->second;
-            }
-            std::vector<Data> raw;
-            station_index_->range_query(Data(station_name, INT_MIN), Data(station_name, INT_MAX), raw);
-            std::vector<int> values;
-            values.reserve(raw.size());
-            for (int idx = 0; idx < static_cast<int>(raw.size()); ++idx) {
-                values.push_back(raw[idx].value);
-            }
-            auto inserted = station_cache.emplace(station_name, std::move(values));
-            return inserted.first->second;
-        };
 
         auto load_train = [&](int train_offset, TrainRecord &train) -> bool {
             auto found = train_cache.find(train_offset);
@@ -479,7 +497,27 @@ namespace sjtu {
             return true;
         };
 
-        for (int index = 0; index < static_cast<int>(from_matches.size()); ++index) {  //三层循环 枚举 first train / mid station /second train
+        for (std::size_t i = 0; i < to_matches.size(); ++i) {
+            const int packed_second = to_matches[i].value;
+            const int train2_offset = unpack_train_offset(packed_second);
+
+            TrainRecord train2{};
+            if (!load_train(train2_offset, train2)) {
+                continue;
+            }
+
+            int destination_index = -1;
+            if (!locate_station(train2_offset, train2, request.to, destination_index)) {
+                continue;
+            }
+
+            for (int transfer_index = 0; transfer_index < destination_index; ++transfer_index) {
+                const std::string transfer_station = from_buffer(train2.stations[transfer_index]);
+                second_by_station[transfer_station].push_back({train2_offset, transfer_index, destination_index});
+            }
+        }
+
+        for (std::size_t index = 0; index < from_matches.size(); ++index) {
             const int packed_first = from_matches[index].value;
             const int train1_offset = unpack_train_offset(packed_first);
             const int from_index = unpack_station_index(packed_first);
@@ -505,26 +543,28 @@ namespace sjtu {
                 if (has_seat_record1 && seat_record1.remain[mid_index - 1] < first_leg_min_seat) {
                     first_leg_min_seat = seat_record1.remain[mid_index - 1];
                 }
+
                 const std::string transfer_station = from_buffer(train1.stations[mid_index]);
                 const long long arrival_mid_abs = to_absolute_minutes(running_date1, train1.start_time_minutes) + train1.arrival_offsets[mid_index];
                 const int first_price = train1.prefix_prices[mid_index] - train1.prefix_prices[from_index];
 
-                const std::vector<int> &second_candidates = load_station_candidates(transfer_station);
-                for (int second_index = 0; second_index < static_cast<int>(second_candidates.size()); ++second_index) {
-                    const int packed_second = second_candidates[second_index];
-                    const int train2_offset = unpack_train_offset(packed_second);
-                    const int transfer_index = unpack_station_index(packed_second);
+                auto found_second = second_by_station.find(transfer_station);
+                if (found_second == second_by_station.end()) {
+                    continue;
+                }
+
+                const std::vector<SecondLegCandidate> &second_candidates = found_second->second;
+                for (std::size_t second_index = 0; second_index < second_candidates.size(); ++second_index) {
+                    const SecondLegCandidate &candidate_meta = second_candidates[second_index];
+                    const int train2_offset = candidate_meta.train_offset;
+                    const int transfer_index = candidate_meta.transfer_index;
+                    const int destination_index = candidate_meta.destination_index;
                     if (train2_offset == train1_offset) {
                         continue;
                     }
 
                     TrainRecord train2{};
                     if (!load_train(train2_offset, train2)) {
-                        continue;
-                    }
-
-                    int destination_index = -1;
-                    if (!locate_station(train2_offset, train2, request.to, destination_index) || destination_index <= transfer_index) {
                         continue;
                     }
 
