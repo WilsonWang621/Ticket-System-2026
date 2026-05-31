@@ -20,7 +20,13 @@ namespace sjtu {
         byCost
     };
 
-    enum class State {
+    enum class OrderState {
+        kSuccess,
+        kPending,
+        kRefunded
+    };
+
+    enum class BuyTicketState {
         Success,
         Pending,
         Failed
@@ -72,9 +78,11 @@ namespace sjtu {
 
 
     struct SeatRecord {
-        int trainId = -1;
-        Date date;
+        int train_offset = -1;
+        int running_date = -1;
+        int segment_num = 0;
         int remain[kMaxSegmentNum]{};
+        bool deleted = false;
     };
 
     struct OrderRecord {
@@ -87,8 +95,7 @@ namespace sjtu {
         DateTime time;
         int fromIndex = -1;
         int toIndex = -1;
-
-        State status = State::Success;
+        OrderState status = OrderState::kSuccess;
     };
 
     struct StationTrainRecord {  //给 query_ticket 和 query_transfer 用的辅助索引
@@ -151,6 +158,22 @@ namespace sjtu {
         TicketQueryResult second;
         int total_price = 0;
         int total_time = 0;
+    };
+
+    struct BuyTicketQuery {
+        char username[kMaxUsernameLength + 1]{};
+        char trainID[kMaxTrainIdLength + 1]{};
+        Date departure_date;
+        int ticketNum{};
+        char from[kMaxStationNameBytes + 1]{};
+        char to[kMaxStationNameBytes + 1]{};
+        bool allow_queue{};
+    };
+
+    struct BuyTicketResult {
+        BuyTicketState state = BuyTicketState::Failed;
+        int total_price = 0;
+        int order_offset = -1;
     };
 }
 #endif // TICKET_SYSTEM_2026_1_DATA_TYPES_H
