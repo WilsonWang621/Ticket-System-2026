@@ -91,8 +91,8 @@ namespace sjtu {
             return result;
         }
         int from_index = -1, to_index = -1;
-        if (!TrainService::locate_station(train, from_buffer(request.from), from_index) ||
-            !TrainService::locate_station(train, from_buffer(request.to), to_index) ||
+        if (!train_service_->locate_station(train_offset, train, from_buffer(request.from), from_index) ||
+            !train_service_->locate_station(train_offset, train, from_buffer(request.to), to_index) ||
             from_index >= to_index) {
             return result;
         }

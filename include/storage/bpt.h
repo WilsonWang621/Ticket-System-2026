@@ -10,7 +10,7 @@ using std::fstream;
 constexpr int Node_size = 128;
 constexpr int MIN_NODE = Node_size / 2;
 constexpr int base = 131;
-constexpr int CACHE_SIZE = 2560;
+constexpr int CACHE_SIZE = 256;
 constexpr int HASH_SIZE = 521;
 
 struct Data {

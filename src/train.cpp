@@ -3,14 +3,38 @@
 //
 #include <../include/service/train.h>
 #include <../include/util/internal_utils.h>
+#include <list>
 #include <map>
 #include<climits>
 #include<algorithm>
+#include <unordered_map>
 
 namespace sjtu {
     unsigned long long hash_key(const std::string &text) {
         Data data(text, 0);
         return data.key;
+    }
+
+    const TrainService::StationLookupTable &TrainService::get_station_lookup_table(int train_offset, const TrainRecord &train) const {
+        auto found = station_lookup_cache_.find(train_offset);
+        if (found != station_lookup_cache_.end()) {
+            return found->second;
+        }
+
+        StationLookupTable table;
+        table.entries.reserve(train.stationNum);
+        for (int i = 0; i < train.stationNum; ++i) {
+            table.entries.push_back({hash_key(from_buffer(train.stations[i])), i});
+        }
+        std::sort(table.entries.begin(), table.entries.end(), [](const StationLookupEntry &lhs,
+                                                                 const StationLookupEntry &rhs) {
+            if (lhs.hash != rhs.hash) {
+                return lhs.hash < rhs.hash;
+            }
+            return lhs.index < rhs.index;
+        });
+        auto inserted = station_lookup_cache_.emplace(train_offset, std::move(table));
+        return inserted.first->second;
     }
 
     void fill_ticket_result(const TrainRecord &train, int from_index, int to_index, int running_date, int seat, TicketQueryResult &result) {
@@ -86,6 +110,7 @@ namespace sjtu {
     bool TrainService::init(const std::string &data_dir) {
         data_dir_ = data_dir;
         initialized_ = train_file_.open("ts_trains.dat") && seat_file_.open("ts_seats.dat");
+        station_lookup_cache_.clear();
         delete train_index_;
         delete station_index_;
         delete seat_index_;
@@ -99,10 +124,12 @@ namespace sjtu {
         if (!initialized_) return;
         train_file_.clear();
         seat_file_.clear();
+        station_lookup_cache_.clear();
         reset_index_files();
     }
 
     void TrainService::reset_index_files() {
+        station_lookup_cache_.clear();
         delete train_index_;
         delete station_index_;
         delete seat_index_;
@@ -177,13 +204,21 @@ namespace sjtu {
         return seat_file_.read(seat_offset, seat_record);
     }
 
-    bool TrainService::locate_station(const TrainRecord& train, const std::string& station_name,
-                                      int& station_index) {
-        for (int i = 0; i < train.stationNum; i++) {
-            if (from_buffer(train.stations[i]) == station_name) {
-                station_index = i;
+    bool TrainService::locate_station(int train_offset, const TrainRecord& train, const std::string& station_name,
+                                      int& station_index) const {
+        const unsigned long long target_hash = hash_key(station_name);
+        const StationLookupTable &table = get_station_lookup_table(train_offset, train);
+        auto begin = table.entries.begin();
+        auto end = table.entries.end();
+        auto it = std::lower_bound(begin, end, target_hash, [](const StationLookupEntry &entry, unsigned long long value) {
+            return entry.hash < value;
+        });
+        while (it != end && it->hash == target_hash) {
+            if (from_buffer(train.stations[it->index]) == station_name) {
+                station_index = it->index;
                 return true;
             }
+            ++it;
         }
         return false;
     }
@@ -272,6 +307,7 @@ namespace sjtu {
         if (train.released) {
             return false;
         }
+        station_lookup_cache_.erase(offset);
         train_index_->remove(Data(trainID, offset));
         return train_file_.recycle(offset);
     }
@@ -348,6 +384,7 @@ namespace sjtu {
         results.clear();
         std::vector<Data> station_matches;
         station_index_->range_query(Data(request.from, INT_MIN), Data(request.from, INT_MAX), station_matches);
+        results.reserve(station_matches.size());
 
         for (int i = 0; i < station_matches.size(); i++) {
             const int packed = station_matches[i].value;
@@ -359,7 +396,7 @@ namespace sjtu {
                 continue;
             }
             int to_idx = -1;
-            if (!locate_station(train, request.to, to_idx) || from_idx >= to_idx) {
+            if (!locate_station(train_offset, train, request.to, to_idx) || from_idx >= to_idx) {
                 continue;
             }
 
@@ -398,8 +435,13 @@ namespace sjtu {
             return false;
         }
 
-        std::map<std::string, std::vector<int>>station_cache;
-        std::map<int, TrainRecord> train_cache;
+        std::unordered_map<std::string, std::vector<int>> station_cache;
+        station_cache.reserve(from_matches.size());
+
+        constexpr std::size_t kTransferTrainCacheLimit = 64;
+        std::list<std::pair<int, TrainRecord>> train_cache_lru;
+        std::unordered_map<int, std::list<std::pair<int, TrainRecord>>::iterator> train_cache;
+        train_cache.reserve(kTransferTrainCacheLimit);
 
         auto load_station_candidates = [&](const std::string &station_name) -> const std::vector<int> & {
             auto found = station_cache.find(station_name);
@@ -409,23 +451,31 @@ namespace sjtu {
             std::vector<Data> raw;
             station_index_->range_query(Data(station_name, INT_MIN), Data(station_name, INT_MAX), raw);
             std::vector<int> values;
+            values.reserve(raw.size());
             for (int idx = 0; idx < static_cast<int>(raw.size()); ++idx) {
                 values.push_back(raw[idx].value);
             }
-            station_cache.insert({station_name, values});
-            return station_cache.find(station_name)->second;
+            auto inserted = station_cache.emplace(station_name, std::move(values));
+            return inserted.first->second;
         };
 
         auto load_train = [&](int train_offset, TrainRecord &train) -> bool {
             auto found = train_cache.find(train_offset);
             if (found != train_cache.end()) {
-                train = found->second;
+                train = found->second->second;
+                train_cache_lru.splice(train_cache_lru.begin(), train_cache_lru, found->second);
                 return true;
             }
             if (!train_file_.read(train_offset, train)) {
                 return false;
             }
-            train_cache.insert({train_offset, train});
+            train_cache_lru.emplace_front(train_offset, train);
+            train_cache.emplace(train_offset, train_cache_lru.begin());
+            if (train_cache_lru.size() > kTransferTrainCacheLimit) {
+                auto victim = std::prev(train_cache_lru.end());
+                train_cache.erase(victim->first);
+                train_cache_lru.pop_back();
+            }
             return true;
         };
 
@@ -474,7 +524,7 @@ namespace sjtu {
                     }
 
                     int destination_index = -1;
-                    if (!locate_station(train2, request.to, destination_index) || destination_index <= transfer_index) {
+                    if (!locate_station(train2_offset, train2, request.to, destination_index) || destination_index <= transfer_index) {
                         continue;
                     }
 
