@@ -178,5 +178,16 @@ namespace sjtu {
         int total_price = 0;
         int order_offset = -1;
     };
+
+    struct OrderView {
+        OrderState status = OrderState::kSuccess;
+        char train_id[kMaxTrainIdLength + 1]{};
+        char from[kMaxStationNameBytes + 1]{};
+        char to[kMaxStationNameBytes + 1]{};
+        DateTime leaving;
+        DateTime arriving;
+        int price = 0;
+        int ticket_num = 0;
+    };
 }
 #endif // TICKET_SYSTEM_2026_1_DATA_TYPES_H
