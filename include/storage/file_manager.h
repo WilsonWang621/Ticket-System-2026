@@ -42,7 +42,7 @@ namespace sjtu {
             return static_cast<std::streamoff>(sizeof(Header)) + static_cast<std::streamoff>(sizeof(Slot)) * static_cast<std::streamoff>(index);
         }
 
-        bool write_header() const {
+        bool write_header() {
             if (!opened_ || !file_.is_open()) {
                 return false;
             }
@@ -52,7 +52,7 @@ namespace sjtu {
             return !file_.fail();
         }
 
-        bool read_header() const {
+        bool read_header() {  //最后要写入内存，不能是const
             if (!opened_ || !file_.is_open()) {
                 return false;
             }
@@ -201,7 +201,7 @@ namespace sjtu {
             return write_header();
         }
 
-        int append(Record &record) {  // 添加
+        int append(const Record &record) {  // 添加
             int index = allocate();
             if (index == -1) {
                 return -1;

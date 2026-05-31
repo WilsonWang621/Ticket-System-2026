@@ -62,8 +62,9 @@ namespace sjtu {
         int stopoverTimes[kMaxSegmentNum - 1]{};
         int arrival_offsets[kMaxStationNum]{};  //到每站的时间
         int departure_offsets[kMaxStationNum]{};//从每站出发的时间
-        Date sale_begin;
-        Date sale_end;
+        int sale_begin = 0;
+        int sale_end = 0;
+        int start_time_minutes = 0;
         char type = 0;
         bool deleted = false;
         bool released = false;
