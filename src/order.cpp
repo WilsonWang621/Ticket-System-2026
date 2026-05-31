@@ -9,13 +9,9 @@ namespace sjtu {
     OrderService::OrderService():initialized_(false), user_service_(nullptr), train_service_(nullptr), user_order_index_(nullptr), pending_order_index_(nullptr){ }
 
     OrderService::~OrderService() {
-         delete user_service_;
-         delete train_service_;
          delete user_order_index_;
          delete pending_order_index_;
-         user_service_ = nullptr;
          user_order_index_ = nullptr;
-         train_service_ = nullptr;
          pending_order_index_ = nullptr;
     }
 
@@ -32,13 +28,9 @@ namespace sjtu {
     void OrderService::clear() {
          if (!initialized_) return;
          order_file_.close();
-         delete user_service_;
-         delete train_service_;
          delete user_order_index_;
          delete pending_order_index_;
-         user_service_ = nullptr;
          user_order_index_ = nullptr;
-         train_service_ = nullptr;
          pending_order_index_ = nullptr;
     }
 

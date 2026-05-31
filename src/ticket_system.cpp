@@ -122,6 +122,7 @@ namespace sjtu {
     TicketSystem::TicketSystem() {
         user_service_.init(".");
         train_service_.init(".");
+        order_service_.init(".", &user_service_, &train_service_);
     }
 
     TicketSystem::~TicketSystem() = default;
