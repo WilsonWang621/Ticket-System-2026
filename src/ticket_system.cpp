@@ -94,6 +94,21 @@ namespace {
                std::to_string(user.privilege);
     }
 
+    std::string format_order(const sjtu::OrderView &orders) {
+        std::string s = "";
+        if (orders.status == sjtu::OrderState::kPending) {
+            s += "[pending]";
+        }
+        else if (orders.status == sjtu::OrderState::kRefunded) {
+            s += "[refunded]";
+        }
+        else {
+            s += "[success]";
+        }
+        return s + " " + orders.train_id + " " + orders.from + " " + format_datetime(orders.leaving) + " -> " +
+            orders.to + " " + format_datetime(orders.arriving) + " " + std::to_string(orders.price) + " " + std::to_string(orders.ticket_num);
+    }
+
     void push_success(std::vector<std::string> &output_lines) {
         output_lines.push_back("0");
     }
@@ -337,18 +352,63 @@ namespace sjtu {
         return false;
     }
 
-    bool TicketSystem::handle_buy_ticket(const parsedCommand &, std::vector<std::string> &output_lines) {
-        push_failure(output_lines);
+    bool TicketSystem::handle_buy_ticket(const parsedCommand &command, std::vector<std::string> &output_lines) {
+        BuyTicketQuery request;
+        copy_to_buffer(require_arg(command, 'u'), request.username, sizeof(request.username));
+        copy_to_buffer(require_arg(command, 'i'), request.trainID, sizeof(request.trainID));
+        copy_to_buffer(require_arg(command, 'f'), request.from, sizeof(request.from));
+        copy_to_buffer(require_arg(command, 't'), request.to, sizeof(request.to));
+        request.ticketNum = std::stoi(require_arg(command, 'n'));
+        request.departure_date = parse_date(require_arg(command, 'd'));
+        if (has_arg(command, 'q')) {
+            if (require_arg(command, 'q') == "true") {
+                request.allow_queue = true;
+            }
+            else {
+                request.allow_queue = false;
+            }
+        }
+        BuyTicketResult result = order_service_.buy_ticket(request);
+        if (result.state == BuyTicketState::Failed) {
+            output_lines.push_back(std::to_string(-1));
+        }
+        else if (result.state == BuyTicketState::Pending) {
+            output_lines.push_back("queue");
+        }
+        else {
+            output_lines.push_back(std::to_string(result.total_price));
+        }
         return false;
     }
 
-    bool TicketSystem::handle_query_order(const parsedCommand &, std::vector<std::string> &output_lines) {
-        push_failure(output_lines);
+    bool TicketSystem::handle_query_order(const parsedCommand &command, std::vector<std::string> &output_lines) {
+        std::vector<sjtu::OrderView> orders;
+        if (order_service_.query_order(require_arg(command, 'u'), orders)){
+            output_lines.push_back(std::to_string(-1));
+            return false;
+        }
+        output_lines.push_back(std::to_string(orders.size()));
+        for (int i = 0; i < orders.size(); i++) {
+            output_lines.push_back(format_order(orders[i]));
+        }
         return false;
     }
 
-    bool TicketSystem::handle_refund_ticket(const parsedCommand &, std::vector<std::string> &output_lines) {
-        push_failure(output_lines);
+    bool TicketSystem::handle_refund_ticket(const parsedCommand &command, std::vector<std::string> &output_lines) {
+        bool flag;
+        std::string name = require_arg(command, 'u');
+        if (has_arg(command, 'n')) {
+            flag = order_service_.refund_ticket(name, std::stoi(require_arg(command, 'n')));
+        }
+        else {
+            flag = order_service_.refund_ticket(name,  1);
+        }
+        if (!flag) {
+            push_failure(output_lines);
+        }
+        else {
+            push_success(output_lines);
+        }
         return false;
     }
 

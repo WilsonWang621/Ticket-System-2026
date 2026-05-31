@@ -5,6 +5,7 @@
 #include <vector>
 #include "service/train.h"
 #include "service/user.h"
+#include "service/order.h"
 namespace sjtu{
 
 class TicketSystem {
@@ -17,6 +18,7 @@ public:
 private:
     UserService user_service_;
     TrainService train_service_;
+    OrderService order_service_;
 
     bool handle_add_user(const parsedCommand &command, std::vector<std::string> &output_lines);
     bool handle_login(const parsedCommand &command, std::vector<std::string> &output_lines);

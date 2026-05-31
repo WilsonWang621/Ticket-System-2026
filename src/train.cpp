@@ -209,6 +209,28 @@ namespace sjtu {
         return result == INT_MAX ? 0 : result;
     }
 
+    bool TrainService::load_or_create_seat_record(int train_offset, int running_date, const sjtu::TrainRecord& train,
+                                                  sjtu::SeatRecord& seat_record, int& seat_offset) {
+        if (get_existing_seat_record(train_offset, running_date, seat_record, seat_offset)) {
+            return true;
+        }
+
+        SeatRecord fresh;
+        fresh.train_offset = train_offset;
+        fresh.segment_num = train.stationNum - 1;
+        fresh.running_date = running_date;
+        for (int i = 0; i < fresh.segment_num; i++) {
+            fresh.remain[i] = train.seatNum;
+        }
+
+        seat_offset = seat_file_.append(fresh);
+        if (seat_offset == -1) {
+            return false;
+        }
+        seat_index_->add(Data(make_seat_key(train_offset, running_date), seat_offset));
+        seat_record = fresh;
+        return true;
+    }
 
 
     bool TrainService::add_train(const TrainRecord& train) {
@@ -224,6 +246,19 @@ namespace sjtu {
         return true;
     }
 
+    bool TrainService::read_seat_record(int seat_offset, sjtu::SeatRecord &seat_record) const {
+        return seat_file_.read(seat_offset, seat_record);
+    }
+
+    bool TrainService::write_seat_record(int seat_offset, sjtu::SeatRecord &seat_record) {
+        return seat_file_.write(seat_offset, seat_record);
+    }
+
+    void TrainService::apply_seat_delta(sjtu::SeatRecord &seat_record, int from_index, int to_index, int delta) {
+        for (int index = from_index; index < to_index; ++index) {
+            seat_record.remain[index] += delta;
+        }
+    }
 
     bool TrainService::delete_train(const std::string& trainID) {
         int offset = -1;

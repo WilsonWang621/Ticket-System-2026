@@ -24,10 +24,12 @@ namespace sjtu {
         bool get_train_by_offset(int train_offset, sjtu::TrainRecord &train) const;
         bool get_existing_seat_record(int train_offset, int running_date, SeatRecord &seat_record, int &seat_offset) const;
         bool read_seat_record(int seat_offset, sjtu::SeatRecord &seat_record) const;
-        bool write_seat_record(int seat_offset, const sjtu::SeatRecord &seat_record);
+        bool write_seat_record(int seat_offset, SeatRecord &seat_record);
         static bool locate_station(const TrainRecord &train, const std::string &station_name, int &station_index) ;
         static int resolve_running_date(const TrainRecord &train, int station_index, const Date &station_departure_date) ;
         static int query_min_remaining_seat(const SeatRecord &seat_record, int from_index, int to_index) ;
+        bool load_or_create_seat_record(int train_offset, int running_date, const sjtu::TrainRecord &train, sjtu::SeatRecord &seat_record, int &seat_offset);
+        void apply_seat_delta(sjtu::SeatRecord &seat_record, int from_index, int to_index, int delta);
 
         bool add_train(const TrainRecord &train);
         bool delete_train(const std::string &trainID);
