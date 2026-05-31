@@ -86,16 +86,19 @@ namespace sjtu {
     };
 
     struct OrderRecord {
-        char username[kMaxUsernameLength + 1]{};
-        char trainID[kMaxTrainIdLength + 1]{};
-
-        int timestamp = -1;
-        int num = 0;
-        int price = 0;
-        DateTime time;
-        int fromIndex = -1;
-        int toIndex = -1;
+        int order_id = -1;
+        int create_timestamp = -1;
+        int user_offset = -1;
+        int train_offset = -1;
+        int seat_offset = -1;
+        int running_date = -1;
+        int from_index = -1;
+        int to_index = -1;
+        int ticket_num = 0;
+        int total_price = 0;
         OrderState status = OrderState::kSuccess;
+        char username[kMaxUsernameLength + 1]{};
+        char train_id[kMaxTrainIdLength + 1]{};
     };
 
     struct StationTrainRecord {  //给 query_ticket 和 query_transfer 用的辅助索引
