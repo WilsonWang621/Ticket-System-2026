@@ -24,7 +24,6 @@ struct parsedCommand {
 class CommandParser {
 public:
     static void parsed(std::string &line, parsedCommand &command);
-    void splitPipe(std::string &line, std::string part[]);
 };
 
 }
