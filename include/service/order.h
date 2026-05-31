@@ -20,9 +20,16 @@ namespace sjtu {
         OrderService();
         ~OrderService();
 
+
+
     private:
+        std::string data_dir_;
+        bool initialized_;
         UserService* user_service_;
         TrainService* train_service_;
+        RecordFile<OrderRecord> order_file_;
+        BPT<Data>* user_order_index_;
+        BPT<Data>* pending_order_index_;
 
     };
 }

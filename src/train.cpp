@@ -54,6 +54,9 @@ namespace sjtu {
     };
 
     bool better(TransferQueryResult &lhs, TransferQueryResult &rhs, const TicketQueryRequest& request) {
+        if (!rhs.exists) {
+            return true;
+        }
         if (request.sort_policy == TicketSortPolicy::byCost) {
             if (lhs.total_price != rhs.total_price) {
                 return lhs.total_price < rhs.total_price;
@@ -94,8 +97,8 @@ namespace sjtu {
 
     void TrainService::clear() {
         if (!initialized_) return;
-        train_file_.close();
-        seat_file_.close();
+        train_file_.clear();
+        seat_file_.clear();
         reset_index_files();
     }
 
@@ -231,7 +234,7 @@ namespace sjtu {
         if (!train_file_.read(offset, train)) {
             return false;
         }
-        if (!train.released) {
+        if (train.released) {
             return false;
         }
         train_index_->remove(Data(trainID, offset));
@@ -292,7 +295,7 @@ namespace sjtu {
                 view.arriving = absolute_minutes_to_datetime(to_absolute_minutes(running_date, train.start_time_minutes) + train.arrival_offsets[idx]);
             }
             if (view.has_leaving_time) {
-                view.leaving = absolute_minutes_to_datetime(to_absolute_minutes(running_date, train.start_time_minutes) + train.arrival_offsets[idx]);
+                view.leaving = absolute_minutes_to_datetime(to_absolute_minutes(running_date, train.start_time_minutes) + train.departure_offsets[idx]);
             }
             if (view.has_seat_to_next) {
                 if (has_seat) {

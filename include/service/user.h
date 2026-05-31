@@ -25,7 +25,7 @@ namespace sjtu {
         bool add_user(const std::string &current_username, UserProfile &new_user);
         bool login(const std::string &username, const std::string &password);
         bool logout(const std::string &username);
-        bool query_profile(const std::string& current_username, const std::string& username, UserProfile &result);
+        bool query_profile(const std::string& current_username, const std::string& username, UserProfile &result) const;
         bool modify_profile(const std::string &current_username,const std::string &target_username,
                         const ProfileUpdateRequest &request, UserProfile &result);
     private:

@@ -141,21 +141,25 @@ namespace sjtu {
         return true;
     }
 
-    bool UserService::query_profile(const std::string& current_username, const std::string& username, UserProfile &result) {
+    bool UserService::query_profile(const std::string& current_username, const std::string& username, UserProfile &result) const {
         if (!is_logged_in(current_username)) {
             return false;
         }
-        UserProfile user;
-        if (!get_user(current_username, user)) {
+        UserProfile current;
+        if (!get_user(current_username, current)) {
             return false;
         }
-        if (user.username != username) {
+        UserProfile target;
+        if (!get_user(username, target)) {
+            return false;
+        }
+        if (current_username != username) {
             const int cur_privilege = get_privilege(current_username);
-            if (user.privilege >= cur_privilege) {
+            if (target.privilege >= cur_privilege) {
                 return false;
             }
         }
-        result = user;
+        result = target;
         return true;
     }
 

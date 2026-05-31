@@ -10,14 +10,15 @@ namespace sjtu {
 constexpr int kMaxCommandArguments = 16;
 
 struct commandArgument {
-    char arg;
+    char arg = '\0';
     std::string value;
 };
 
 struct parsedCommand {
-    int timestamp;
+    int timestamp = 0;
     std::string command_name;
     commandArgument arguments[kMaxCommandArguments];
+    int argument_count = 0;
 };
 
 class CommandParser {

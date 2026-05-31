@@ -4,35 +4,57 @@
 #include <../include/util/parser.h>
 
 namespace sjtu {
+    namespace {
+        void skip_spaces(const std::string &line, int &pos) {
+            while (pos < static_cast<int>(line.size()) && line[pos] == ' ') {
+                ++pos;
+            }
+        }
+
+        std::string next_token(const std::string &line, int &pos) {
+            skip_spaces(line, pos);
+            int begin = pos;
+            while (pos < static_cast<int>(line.size()) && line[pos] != ' ') {
+                ++pos;
+            }
+            return line.substr(begin, pos - begin);
+        }
+    }
+
     void CommandParser::parsed(std::string& line, parsedCommand& command) {
-        int cnt = -2;
-        bool empty = true;
-        std::string tmp;
-        for (int i = 0; i < line.size(); i++) {
-            if (line[i] == ' ' && !empty) {
-                if (cnt == -2) {
-                    command.timestamp = std::stoi(tmp);
-                }
-                if (cnt == -1) {
-                    command.command_name = tmp;
-                }
-                else {
-                    command.arguments[cnt].value = tmp;
-                }
-                cnt++;
-                tmp = "";
-                empty = true;
+        command = parsedCommand{};
+        int pos = 0;
+        skip_spaces(line, pos);
+        if (pos < static_cast<int>(line.size()) && line[pos] == '[') {
+            ++pos;
+            while (pos < static_cast<int>(line.size()) && line[pos] >= '0' && line[pos] <= '9') {
+                command.timestamp = command.timestamp * 10 + line[pos] - '0';
+                ++pos;
             }
-            else {
-                if (line[i] == '-') {
-                    command.arguments[cnt].arg = line[++i];
-                    empty = true;
-                }
-                else {
-                    tmp += line[i];
-                    empty = false;
-                }
+            if (pos < static_cast<int>(line.size()) && line[pos] == ']') {
+                ++pos;
             }
+        }
+
+        command.command_name = next_token(line, pos);
+
+        std::string flag;
+        std::string value;
+        while (pos < static_cast<int>(line.size())) {
+            flag = next_token(line, pos);
+            value = next_token(line, pos);
+            if (flag.empty() || value.empty()) {
+                break;
+            }
+            if (flag.size() != 2 || flag[0] != '-') {
+                continue;
+            }
+            if (command.argument_count >= kMaxCommandArguments) {
+                break;
+            }
+            command.arguments[command.argument_count].arg = flag[1];
+            command.arguments[command.argument_count].value = value;
+            ++command.argument_count;
         }
     }
 
