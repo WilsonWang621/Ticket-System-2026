@@ -6,7 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 
-add_executable(ticket_system
+add_executable(code
         src/main.cpp
         include/service/user.h
     include/ticket_system.h
@@ -24,15 +24,15 @@ add_executable(ticket_system
         include/util/internal_utils.h
 )
 
-target_include_directories(ticket_system PRIVATE
+target_include_directories(code PRIVATE
     ${CMAKE_CURRENT_SOURCE_DIR}/include
 )
 
-target_compile_options(ticket_system PRIVATE
+target_compile_options(code PRIVATE
     $<$<CXX_COMPILER_ID:GNU,Clang,AppleClang>:-Wall -Wextra -Wshadow>
     $<$<CXX_COMPILER_ID:MSVC>:/W4>
 )
 
 if (CMAKE_CXX_COMPILER_ID STREQUAL "GNU" AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9)
-    target_link_libraries(ticket_system PRIVATE stdc++fs)
+    target_link_libraries(code PRIVATE stdc++fs)
 endif()
