@@ -5,6 +5,8 @@
 
 #include <climits>
 #include <cstddef>
+#include <iterator>
+#include <utility>
 
 namespace sjtu
 { 
@@ -43,7 +45,7 @@ public:
 		using value_type = T;
 		using pointer = T*;
 		using reference = T&;
-		using iterator_category = std::output_iterator_tag; 
+		using iterator_category = std::random_access_iterator_tag; 
 
 	private:
 		/**
@@ -142,6 +144,36 @@ public:
 		bool operator!=(const const_iterator &rhs) const {
 		    return ptr1 != rhs.ptr1 || vec != rhs.vec;
 		}
+		bool operator<(const iterator &rhs) const {
+		    if (vec != rhs.vec) {
+		        throw invalid_iterator();
+		    }
+		    return ptr1 < rhs.ptr1;
+		}
+		bool operator<(const const_iterator &rhs) const {
+		    if (vec != rhs.vec) {
+		        throw invalid_iterator();
+		    }
+		    return ptr1 < rhs.ptr;
+		}
+		bool operator>(const iterator &rhs) const {
+		    return rhs < *this;
+		}
+		bool operator>(const const_iterator &rhs) const {
+		    return rhs < *this;
+		}
+		bool operator<=(const iterator &rhs) const {
+		    return !(*this > rhs);
+		}
+		bool operator<=(const const_iterator &rhs) const {
+		    return !(*this > rhs);
+		}
+		bool operator>=(const iterator &rhs) const {
+		    return !(*this < rhs);
+		}
+		bool operator>=(const const_iterator &rhs) const {
+		    return !(*this < rhs);
+		}
 	};
 	/**
 	 * TODO
@@ -152,9 +184,9 @@ public:
 	public:
 		using difference_type = std::ptrdiff_t;
 		using value_type = T;
-		using pointer = T*;
-		using reference = T&;
-		using iterator_category = std::output_iterator_tag;
+		using pointer = const T*;
+		using reference = const T&;
+		using iterator_category = std::random_access_iterator_tag;
 
 	private:
 		/*TODO*/
@@ -378,7 +410,7 @@ public:
 	    return iterator(p , this);
 	}
 	const_iterator begin() const {
-	    return iterator(p , this);
+	    return const_iterator(p , this);
 	}
 	const_iterator cbegin() const {
 	    return const_iterator(p , this);
@@ -415,6 +447,25 @@ public:
                 p[i].~T();
             }
             current_size = 0;
+	}
+	void reserve(const size_t &cap) {
+	    if (cap <= static_cast<size_t>(capacity)) {
+	        return;
+	    }
+	    int new_capacity = capacity;
+	    while (new_capacity < static_cast<int>(cap)) {
+	        new_capacity *= 2;
+	    }
+	    T* ptr = static_cast<T*>(::operator new(sizeof(T) * new_capacity));
+	    for(int i = 0; i < current_size; i++){
+	        new (ptr + i) T(std::move(p[i]));
+	    }
+	    for(int i = 0; i < current_size; i++){
+	        p[i].~T();
+	    }
+	    ::operator delete(p);
+	    p = ptr;
+	    capacity = new_capacity;
 	}
 	/**
 	 * inserts value before pos
@@ -487,11 +538,11 @@ public:
 	 * adds an element to the end.
 	 */
 	void push_back(const T &value) {
-	    new (p + current_size) T(value);
-	    current_size++;
 	    if(current_size == capacity){
 	        extend();
 	    }
+	    new (p + current_size) T(value);
+	    current_size++;
 	}
 	/**
 	 * remove the last element from the end.

@@ -6,8 +6,8 @@
 #define TICKET_SYSTEM_2026_1_TRAIN_H
 
 #include <string>
-#include <unordered_map>
-#include <vector>
+#include "STLite/unordered_map.hpp"
+#include "STLite/vector.hpp"
 
 #include "../model/data_types.h"
 #include "../storage/bpt.h"
@@ -37,7 +37,7 @@ namespace sjtu {
         bool delete_train(const std::string &trainID);
         bool release_train(const std::string& trainID);
         bool query_train(const std::string &train_id, const Date &date, TrainQueryView &result) const;
-        bool query_ticket(const TicketQueryRequest &request, std::vector<TicketQueryResult> &results) const;
+        bool query_ticket(const TicketQueryRequest &request, sjtu::vector<TicketQueryResult> &results) const;
         bool query_transfer(const TicketQueryRequest &request, TransferQueryResult &result) const;
 
     private:
@@ -55,10 +55,10 @@ namespace sjtu {
         };
 
         struct StationLookupTable {
-            std::vector<StationLookupEntry> entries;
+            sjtu::vector<StationLookupEntry> entries;
         };
 
-        mutable std::unordered_map<int, StationLookupTable> station_lookup_cache_;
+        mutable sjtu::unordered_map<int, StationLookupTable> station_lookup_cache_;
 
         bool find_train_offset(const std::string &train_id, int &train_offset) const;
         const StationLookupTable &get_station_lookup_table(int train_offset, const TrainRecord &train) const;

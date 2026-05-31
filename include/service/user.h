@@ -3,7 +3,7 @@
 
 #include <string>
 #include "../model/data_types.h"
-#include <map>
+#include "STLite/map.hpp"
 #include "../storage/bpt.h"
 #include "../storage/file_manager.h"
 
@@ -33,7 +33,7 @@ namespace sjtu {
         bool initialized_;
         RecordFile<UserProfile> user_file_; //offset -> UserRecord
         BPT<Data> *user_index_; // username_hash -> offset
-        std::map<std::string, bool> logged_in_; //登陆过哪些
+        sjtu::map<std::string, bool> logged_in_; //登陆过哪些
 
         bool find_user_offset(const std::string &username, int &offset) const;
         void reset_index_file();

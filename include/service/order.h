@@ -7,7 +7,8 @@
 
 #include <string>
 #include "../model/data_types.h"
-#include <map>
+#include "STLite/map.hpp"
+#include "STLite/vector.hpp"
 #include "../storage/bpt.h"
 #include "../storage/file_manager.h"
 #include<util/internal_utils.h>
@@ -29,7 +30,7 @@ namespace sjtu {
         void try_promote_pending_orders(const std::string &train_id, int running_date);
 
         BuyTicketResult buy_ticket(const BuyTicketQuery& request);
-        bool query_order(const std::string &username, std::vector<sjtu::OrderView> &orders);
+        bool query_order(const std::string &username, sjtu::vector<sjtu::OrderView> &orders);
         bool refund_ticket(std::string &username, int n);
 
     private:

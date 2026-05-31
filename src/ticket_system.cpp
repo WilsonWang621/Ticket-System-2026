@@ -27,8 +27,8 @@ namespace {
         return get_arg(command, name, ignored);
     }
 
-    std::vector<std::string> split_pipe(const std::string &text) {
-        std::vector<std::string> result;
+    sjtu::vector<std::string> split_pipe(const std::string &text) {
+        sjtu::vector<std::string> result;
         std::string current;
         for (char ch : text) {
             if (ch == '|') {
@@ -109,11 +109,11 @@ namespace {
             orders.to + " " + format_datetime(orders.arriving) + " " + std::to_string(orders.price) + " " + std::to_string(orders.ticket_num);
     }
 
-    void push_success(std::vector<std::string> &output_lines) {
+    void push_success(sjtu::vector<std::string> &output_lines) {
         output_lines.push_back("0");
     }
 
-    void push_failure(std::vector<std::string> &output_lines) {
+    void push_failure(sjtu::vector<std::string> &output_lines) {
         output_lines.push_back("-1");
     }
 }
@@ -127,7 +127,7 @@ namespace sjtu {
 
     TicketSystem::~TicketSystem() = default;
 
-    bool TicketSystem::handle_add_user(const parsedCommand &command, std::vector<std::string> &output_lines) {
+    bool TicketSystem::handle_add_user(const parsedCommand &command, sjtu::vector<std::string> &output_lines) {
         UserProfile user{};
         copy_to_buffer(require_arg(command, 'u'), user.username, sizeof(user.username));
         copy_to_buffer(require_arg(command, 'p'), user.password, sizeof(user.password));
@@ -144,7 +144,7 @@ namespace sjtu {
         return false;
     }
 
-    bool TicketSystem::handle_login(const parsedCommand &command, std::vector<std::string> &output_lines) {
+    bool TicketSystem::handle_login(const parsedCommand &command, sjtu::vector<std::string> &output_lines) {
         if (user_service_.login(require_arg(command, 'u'), require_arg(command, 'p'))) {
             push_success(output_lines);
         }
@@ -154,7 +154,7 @@ namespace sjtu {
         return false;
     }
 
-    bool TicketSystem::handle_logout(const parsedCommand &command, std::vector<std::string> &output_lines) {
+    bool TicketSystem::handle_logout(const parsedCommand &command, sjtu::vector<std::string> &output_lines) {
         if (user_service_.logout(require_arg(command, 'u'))) {
             push_success(output_lines);
         }
@@ -164,7 +164,7 @@ namespace sjtu {
         return false;
     }
 
-    bool TicketSystem::handle_query_profile(const parsedCommand &command, std::vector<std::string> &output_lines) {
+    bool TicketSystem::handle_query_profile(const parsedCommand &command, sjtu::vector<std::string> &output_lines) {
         UserProfile user{};
         if (!user_service_.query_profile(require_arg(command, 'c'), require_arg(command, 'u'), user)) {
             push_failure(output_lines);
@@ -175,7 +175,7 @@ namespace sjtu {
         return false;
     }
 
-    bool TicketSystem::handle_modify_profile(const parsedCommand &command, std::vector<std::string> &output_lines) {
+    bool TicketSystem::handle_modify_profile(const parsedCommand &command, sjtu::vector<std::string> &output_lines) {
         ProfileUpdateRequest request{};
         std::string value;
         if (get_arg(command, 'p', value)) {
@@ -205,19 +205,19 @@ namespace sjtu {
         return false;
     }
 
-    bool TicketSystem::handle_add_train(const parsedCommand &command, std::vector<std::string> &output_lines) {
+    bool TicketSystem::handle_add_train(const parsedCommand &command, sjtu::vector<std::string> &output_lines) {
         TrainRecord train{};
         copy_to_buffer(require_arg(command, 'i'), train.trainID, sizeof(train.trainID));
         train.stationNum = std::stoi(require_arg(command, 'n'));
         train.seatNum = std::stoi(require_arg(command, 'm'));
         train.type = require_arg(command, 'y').empty() ? '\0' : require_arg(command, 'y')[0];
 
-        const std::vector<std::string> stations = split_pipe(require_arg(command, 's'));
+        const sjtu::vector<std::string> stations = split_pipe(require_arg(command, 's'));
         for (int i = 0; i < train.stationNum && i < static_cast<int>(stations.size()); ++i) {
             copy_to_buffer(stations[i], train.stations[i], sizeof(train.stations[i]));
         }
 
-        const std::vector<std::string> prices = split_pipe(require_arg(command, 'p'));
+        const sjtu::vector<std::string> prices = split_pipe(require_arg(command, 'p'));
         train.prefix_prices[0] = 0;
         for (int i = 0; i + 1 < train.stationNum && i < static_cast<int>(prices.size()); ++i) {
             train.prices[i] = std::stoi(prices[i]);
@@ -227,13 +227,13 @@ namespace sjtu {
         train.startTime = parse_time(require_arg(command, 'x'));
         train.start_time_minutes = time_to_minutes(train.startTime);
 
-        const std::vector<std::string> travel_times = split_pipe(require_arg(command, 't'));
+        const sjtu::vector<std::string> travel_times = split_pipe(require_arg(command, 't'));
         for (int i = 0; i + 1 < train.stationNum && i < static_cast<int>(travel_times.size()); ++i) {
             train.travelTimes[i] = parse_minutes(travel_times[i]);
         }
 
         if (has_arg(command, 'o')) {
-            const std::vector<std::string> stopover_times = split_pipe(require_arg(command, 'o'));
+            const sjtu::vector<std::string> stopover_times = split_pipe(require_arg(command, 'o'));
             for (int i = 0; i + 2 < train.stationNum && i < static_cast<int>(stopover_times.size()); ++i) {
                 train.stopoverTimes[i] = parse_minutes(stopover_times[i]);
             }
@@ -248,7 +248,7 @@ namespace sjtu {
             }
         }
 
-        const std::vector<std::string> sale_dates = split_pipe(require_arg(command, 'd'));
+        const sjtu::vector<std::string> sale_dates = split_pipe(require_arg(command, 'd'));
         train.sale_begin = date_to_ordinal(parse_date(sale_dates[0]));
         train.sale_end = date_to_ordinal(parse_date(sale_dates[1]));
 
@@ -261,7 +261,7 @@ namespace sjtu {
         return false;
     }
 
-    bool TicketSystem::handle_delete_train(const parsedCommand &command, std::vector<std::string> &output_lines) {
+    bool TicketSystem::handle_delete_train(const parsedCommand &command, sjtu::vector<std::string> &output_lines) {
         if (train_service_.delete_train(require_arg(command, 'i'))) {
             push_success(output_lines);
         }
@@ -271,7 +271,7 @@ namespace sjtu {
         return false;
     }
 
-    bool TicketSystem::handle_release_train(const parsedCommand &command, std::vector<std::string> &output_lines) {
+    bool TicketSystem::handle_release_train(const parsedCommand &command, sjtu::vector<std::string> &output_lines) {
         if (train_service_.release_train(require_arg(command, 'i'))) {
             push_success(output_lines);
         }
@@ -281,7 +281,7 @@ namespace sjtu {
         return false;
     }
 
-    bool TicketSystem::handle_query_train(const parsedCommand &command, std::vector<std::string> &output_lines) {
+    bool TicketSystem::handle_query_train(const parsedCommand &command, sjtu::vector<std::string> &output_lines) {
         TrainQueryView view{};
         if (!train_service_.query_train(require_arg(command, 'i'), parse_date(require_arg(command, 'd')), view)) {
             push_failure(output_lines);
@@ -318,14 +318,14 @@ namespace sjtu {
         return false;
     }
 
-    bool TicketSystem::handle_query_ticket(const parsedCommand &command, std::vector<std::string> &output_lines) {
+    bool TicketSystem::handle_query_ticket(const parsedCommand &command, sjtu::vector<std::string> &output_lines) {
         TicketQueryRequest request{};
         copy_to_buffer(require_arg(command, 's'), request.from, sizeof(request.from));
         copy_to_buffer(require_arg(command, 't'), request.to, sizeof(request.to));
         request.departure_date = parse_date(require_arg(command, 'd'));
         request.sort_policy = require_arg(command, 'p') == "cost" ? TicketSortPolicy::byCost : TicketSortPolicy::byTime;
 
-        std::vector<TicketQueryResult> results;
+        sjtu::vector<TicketQueryResult> results;
         train_service_.query_ticket(request, results);
 
         output_lines.push_back(std::to_string(results.size()));
@@ -335,7 +335,7 @@ namespace sjtu {
         return false;
     }
 
-    bool TicketSystem::handle_query_transfer(const parsedCommand &command, std::vector<std::string> &output_lines) {
+    bool TicketSystem::handle_query_transfer(const parsedCommand &command, sjtu::vector<std::string> &output_lines) {
         TicketQueryRequest request{};
         copy_to_buffer(require_arg(command, 's'), request.from, sizeof(request.from));
         copy_to_buffer(require_arg(command, 't'), request.to, sizeof(request.to));
@@ -353,7 +353,7 @@ namespace sjtu {
         return false;
     }
 
-    bool TicketSystem::handle_buy_ticket(const parsedCommand &command, std::vector<std::string> &output_lines) {
+    bool TicketSystem::handle_buy_ticket(const parsedCommand &command, sjtu::vector<std::string> &output_lines) {
         BuyTicketQuery request;
         copy_to_buffer(require_arg(command, 'u'), request.username, sizeof(request.username));
         copy_to_buffer(require_arg(command, 'i'), request.trainID, sizeof(request.trainID));
@@ -382,8 +382,8 @@ namespace sjtu {
         return false;
     }
 
-    bool TicketSystem::handle_query_order(const parsedCommand &command, std::vector<std::string> &output_lines) {
-        std::vector<sjtu::OrderView> orders;
+    bool TicketSystem::handle_query_order(const parsedCommand &command, sjtu::vector<std::string> &output_lines) {
+        sjtu::vector<sjtu::OrderView> orders;
         if (!order_service_.query_order(require_arg(command, 'u'), orders)){
             output_lines.push_back(std::to_string(-1));
             return false;
@@ -395,7 +395,7 @@ namespace sjtu {
         return false;
     }
 
-    bool TicketSystem::handle_refund_ticket(const parsedCommand &command, std::vector<std::string> &output_lines) {
+    bool TicketSystem::handle_refund_ticket(const parsedCommand &command, sjtu::vector<std::string> &output_lines) {
         bool flag;
         std::string name = require_arg(command, 'u');
         if (has_arg(command, 'n')) {
@@ -413,7 +413,7 @@ namespace sjtu {
         return false;
     }
 
-    bool TicketSystem::excute(parsedCommand& command, std::vector<std::string> &output) {
+    bool TicketSystem::excute(parsedCommand& command, sjtu::vector<std::string> &output) {
         if (command.command_name == "add_user") return handle_add_user(command, output);
         if (command.command_name == "login") return handle_login(command, output);
         if (command.command_name == "logout") return handle_logout(command, output);
@@ -457,7 +457,7 @@ namespace sjtu {
             parsedCommand command;
             CommandParser::parsed(line, command);
 
-            std::vector<std::string> output;
+            sjtu::vector<std::string> output;
             const bool should_exit = excute(command, output);
             if (!output.empty()) {
                 std::cout << "[" << command.timestamp << "] " << output[0] << '\n';

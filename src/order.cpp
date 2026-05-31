@@ -159,13 +159,13 @@ namespace sjtu {
         return result;
     }
 
-    bool OrderService::query_order(const std::string& username, std::vector<sjtu::OrderView>& orders) {
+    bool OrderService::query_order(const std::string& username, sjtu::vector<sjtu::OrderView>& orders) {
         orders.clear();
         if (user_service_ == nullptr || train_service_ == nullptr || !user_service_->is_logged_in(username)) {
             return false;
         }
 
-        std::vector<Data> order_entries;
+        sjtu::vector<Data> order_entries;
         user_order_index_->range_query(Data(username, INT_MIN), Data(username, INT_MAX), order_entries);
         for (int index = static_cast<int>(order_entries.size()) - 1; index >= 0; --index) {
             OrderRecord order{};
@@ -188,7 +188,7 @@ namespace sjtu {
             return false;
         }
 
-        std::vector<Data> order_entries;
+        sjtu::vector<Data> order_entries;
         user_order_index_->range_query(Data(username, INT_MIN), Data(username, INT_MAX), order_entries);
         if (n <= 0 || n > static_cast<int>(order_entries.size())) {
             return false;
@@ -235,7 +235,7 @@ namespace sjtu {
             return;
         }
 
-        std::vector<Data> pending_orders;
+        sjtu::vector<Data> pending_orders;
         pending_order_index_->range_query(Data(make_pending_key(train_id, running_date), INT_MIN),
                                           Data(make_pending_key(train_id, running_date), INT_MAX),
                                           pending_orders);

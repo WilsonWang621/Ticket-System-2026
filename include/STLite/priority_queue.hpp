@@ -25,7 +25,6 @@ namespace sjtu {
  */
 template <class T, class Compare = std::less<T>>
 class priority_queue {
-<<<<<<< HEAD
 private:
     struct Node {
         T value;
@@ -116,25 +115,11 @@ private:
             delete newNode;
             throw;
         }
-    }
-=======
-   public:
-    priority_queue();
-    priority_queue(const priority_queue&);
-    ~priority_queue();
-
-    priority_queue& operator=(const priority_queue&);
-
-    /** Adds one element to the queue. */
-    void push(const T&);
->>>>>>> acm-course/main
-
     /**
      * Returns a read-only reference of the first element in the queue.
      *
      * @throws container_is_empty when the first element does not exist.
      */
-<<<<<<< HEAD
     const T & top() const {
         if (empty()) {
             throw container_is_empty();
@@ -142,16 +127,12 @@ private:
 
         return root->value;
     }
-=======
-    const T& top() const;
->>>>>>> acm-course/main
 
     /**
      * Removes the first element in the queue.
      *
      * @throws container_is_empty when the first element does not exist.
      */
-<<<<<<< HEAD
     void pop() {
         if (empty())
             throw container_is_empty();
@@ -186,18 +167,6 @@ private:
         root = nullptr;
         current_size = 0;
     }
-=======
-    void pop();
-
-    /** Returns the number of elements in the queue. */
-    size_t size() const;
-
-    /** Returns whether there is any element in the queue. */
-    bool empty() const;
-
-    /** Clears all elements in the queue. */
-    void clear();
->>>>>>> acm-course/main
 
     /**
      * @brief Merges two priority queues into one.
@@ -207,7 +176,6 @@ private:
      *
      * The time complexity shall be O(log n) or better.
      */
-<<<<<<< HEAD
     void merge(priority_queue &other) {
         if (this == &other) return;
 
@@ -222,9 +190,6 @@ private:
             throw;
         }
     }
-=======
-    void merge(priority_queue&);
->>>>>>> acm-course/main
 };
 
 }  // namespace sjtu

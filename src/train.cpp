@@ -3,11 +3,11 @@
 //
 #include <../include/service/train.h>
 #include <../include/util/internal_utils.h>
-#include <list>
-#include <map>
+#include "STLite/list.hpp"
+#include "STLite/map.hpp"
 #include<climits>
 #include<algorithm>
-#include <unordered_map>
+#include "STLite/unordered_map.hpp"
 
 namespace sjtu {
     unsigned long long hash_key(const std::string &text) {
@@ -380,18 +380,18 @@ namespace sjtu {
         return true;
     }
 
-    bool TrainService::query_ticket(const TicketQueryRequest& request, std::vector<TicketQueryResult>& results) const {
+    bool TrainService::query_ticket(const TicketQueryRequest& request, sjtu::vector<TicketQueryResult>& results) const {
         results.clear();
 
-        std::vector<Data> from_matches;
-        std::vector<Data> to_matches;
+        sjtu::vector<Data> from_matches;
+        sjtu::vector<Data> to_matches;
         station_index_->range_query(Data(request.from, INT_MIN), Data(request.from, INT_MAX), from_matches);
         station_index_->range_query(Data(request.to, INT_MIN), Data(request.to, INT_MAX), to_matches);
 
         results.reserve(std::min(from_matches.size(), to_matches.size()));
 
         const bool enumerate_from = from_matches.size() <= to_matches.size();
-        const std::vector<Data> &candidate_matches = enumerate_from ? from_matches : to_matches;
+        const sjtu::vector<Data> &candidate_matches = enumerate_from ? from_matches : to_matches;
 
         auto evaluate_candidate = [&](int train_offset, TrainRecord &train, int from_idx, int to_idx) {
             if (from_idx >= to_idx) {
@@ -455,8 +455,8 @@ namespace sjtu {
     bool TrainService::query_transfer(const TicketQueryRequest& request, TransferQueryResult& result) const {
         result = {};
 
-        std::vector<Data> from_matches;
-        std::vector<Data> to_matches;
+        sjtu::vector<Data> from_matches;
+        sjtu::vector<Data> to_matches;
         station_index_->range_query(Data(request.from, INT_MIN), Data(request.from, INT_MAX), from_matches);
         station_index_->range_query(Data(request.to, INT_MIN), Data(request.to, INT_MAX), to_matches);
         if (from_matches.empty() || to_matches.empty()) {
@@ -469,12 +469,12 @@ namespace sjtu {
             int destination_index = -1;
         };
 
-        std::unordered_map<std::string, std::vector<SecondLegCandidate>> second_by_station;
+        sjtu::unordered_map<std::string, sjtu::vector<SecondLegCandidate>> second_by_station;
         second_by_station.reserve(to_matches.size() * 4 + 1);
 
         constexpr std::size_t kTransferTrainCacheLimit = 64;
-        std::list<std::pair<int, TrainRecord>> train_cache_lru;
-        std::unordered_map<int, std::list<std::pair<int, TrainRecord>>::iterator> train_cache;
+        sjtu::list<sjtu::pair<int, TrainRecord>> train_cache_lru;
+        sjtu::unordered_map<int, sjtu::list<sjtu::pair<int, TrainRecord>>::iterator> train_cache;
         train_cache.reserve(kTransferTrainCacheLimit);
 
         auto load_train = [&](int train_offset, TrainRecord &train) -> bool {
@@ -553,7 +553,7 @@ namespace sjtu {
                     continue;
                 }
 
-                const std::vector<SecondLegCandidate> &second_candidates = found_second->second;
+                const sjtu::vector<SecondLegCandidate> &second_candidates = found_second->second;
                 for (std::size_t second_index = 0; second_index < second_candidates.size(); ++second_index) {
                     const SecondLegCandidate &candidate_meta = second_candidates[second_index];
                     const int train2_offset = candidate_meta.train_offset;
