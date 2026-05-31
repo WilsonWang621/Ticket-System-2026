@@ -384,7 +384,7 @@ namespace sjtu {
 
     bool TicketSystem::handle_query_order(const parsedCommand &command, std::vector<std::string> &output_lines) {
         std::vector<sjtu::OrderView> orders;
-        if (order_service_.query_order(require_arg(command, 'u'), orders)){
+        if (!order_service_.query_order(require_arg(command, 'u'), orders)){
             output_lines.push_back(std::to_string(-1));
             return false;
         }
@@ -432,7 +432,10 @@ namespace sjtu {
         if (command.command_name == "clean") {
             user_service_.clear();
             train_service_.clear();
+            order_service_.clear();
+            user_service_.init(".");
             train_service_.init(".");
+            order_service_.init(".", &user_service_, &train_service_);
             push_success(output);
             return false;
         }

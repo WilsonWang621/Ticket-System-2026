@@ -25,7 +25,7 @@ namespace sjtu {
         result.total_time = static_cast<int>(to_absolute_minutes(result.arriving) - to_absolute_minutes(result.leaving));
     }
 
-    bool my_strcmp(const char* str1, const char* str2) {
+    int my_strcmp(const char* str1, const char* str2) {
         if (str1 == nullptr || str2 == nullptr) {
             if (str1 == str2) return 0;
             return (str1 == nullptr) ? -1 : 1;
@@ -43,14 +43,14 @@ namespace sjtu {
         if (lhs.price != rhs.price) {
             return lhs.price < rhs.price;
         }
-        return my_strcmp(lhs.train_id, rhs.train_id);
+        return my_strcmp(lhs.train_id, rhs.train_id) < 0;
     };
 
     auto compare_by_time =[](const TicketQueryResult &lhs, const TicketQueryResult &rhs) {
         if (lhs.total_time != rhs.total_time) {
             return lhs.total_time < rhs.total_time;
         }
-        return my_strcmp(lhs.train_id, rhs.train_id);
+        return my_strcmp(lhs.train_id, rhs.train_id) < 0;
     };
 
     bool better(TransferQueryResult &lhs, TransferQueryResult &rhs, const TicketQueryRequest& request) {

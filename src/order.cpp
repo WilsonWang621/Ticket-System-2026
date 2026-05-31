@@ -17,6 +17,8 @@ namespace sjtu {
 
     bool OrderService::init(const std::string& data_dir, UserService* user_service, TrainService* train_service) {
          data_dir_ = data_dir;
+         delete user_order_index_;
+         delete pending_order_index_;
          initialized_ = order_file_.open("ts_order_dat");
          user_service_ = user_service;
          train_service_ = train_service;
@@ -27,11 +29,10 @@ namespace sjtu {
 
     void OrderService::clear() {
          if (!initialized_) return;
-         order_file_.close();
-         delete user_order_index_;
-         delete pending_order_index_;
-         user_order_index_ = nullptr;
-         pending_order_index_ = nullptr;
+         order_file_.clear();
+         reset_index_files();
+         user_service_ = nullptr;
+         train_service_ = nullptr;
     }
 
     void OrderService::reset_index_files() {
@@ -39,12 +40,12 @@ namespace sjtu {
         delete pending_order_index_;
         user_order_index_ = nullptr;
         pending_order_index_ = nullptr;
-        std::remove("init_ts_user_order_index");
-        std::remove("data_ts_user_order_index");
-        std::remove("init_ts_pending_order_index");
-        std::remove("data_ts_pending_order_index");
-        user_order_index_ = new BPT<Data>("ts_user_order_index");
-        pending_order_index_ = new BPT<Data>("ts_pending_order_index");
+        std::remove("init_ts_order_index");
+        std::remove("data_ts_order_index");
+        std::remove("init_ts_pending_index");
+        std::remove("data_ts_pending_index");
+        user_order_index_ = new BPT<Data>("ts_order_index");
+        pending_order_index_ = new BPT<Data>("ts_pending_index");
     }
 
     bool OrderService::append_order_index(const std::string& username, int order_offset) {
@@ -83,14 +84,16 @@ namespace sjtu {
         }
         TrainRecord train;
         int train_offset = -1;
-        if (train_service_->get_train(request.trainID, train, train_offset)) {
+        if (!train_service_->get_train(request.trainID, train, train_offset)) {
             return result;
         }
         if (!train.released) {
             return result;
         }
         int from_index = -1, to_index = -1;
-        if (TrainService::locate_station(train, from_buffer(request.from), from_index) || TrainService::locate_station(train, from_buffer(request.to), to_index) || from_index >= to_index) {
+        if (!TrainService::locate_station(train, from_buffer(request.from), from_index) ||
+            !TrainService::locate_station(train, from_buffer(request.to), to_index) ||
+            from_index >= to_index) {
             return result;
         }
 
