@@ -43,14 +43,14 @@ namespace {
         return result;
     }
 
-    sjtu::Date parse_date(const std::string &text) {     // 把
+    sjtu::Date parse_date(const std::string &text) {     // 把string 类的日期转化成 Date类型
         sjtu::Date date{};
         date.month = std::stoi(text.substr(0, 2));
         date.day = std::stoi(text.substr(3, 2));
         return date;
     }
 
-    sjtu::ClockTime parse_time(const std::string &text) {
+    sjtu::ClockTime parse_time(const std::string &text) { // 把string 类的日期转化成 time类型
         sjtu::ClockTime time{};
         time.hour = std::stoi(text.substr(0, 2));
         time.minute = std::stoi(text.substr(3, 2));
@@ -61,13 +61,13 @@ namespace {
         return std::stoi(text);
     }
 
-    std::string two_digits(int value) {
+    std::string two_digits(int value) {   //调整位数
         if (value < 10) {
             return "0" + std::to_string(value);
         }
         return std::to_string(value);
     }
-
+    //按要求调整输出格式
     std::string format_date(const sjtu::Date &date) {
         return two_digits(date.month) + "-" + two_digits(date.day);
     }
@@ -127,6 +127,7 @@ namespace sjtu {
 
     TicketSystem::~TicketSystem() = default;
 
+    // 统一的思路就是先开一个对应指令的结构体，然后把解析好的信息喂给对应结构体变量然后 作为结构体参数和输出信息outline一起作为参数传入相应的处理函数
     bool TicketSystem::handle_add_user(const parsedCommand &command, sjtu::vector<std::string> &output_lines) {
         UserProfile user{};
         copy_to_buffer(require_arg(command, 'u'), user.username, sizeof(user.username));
