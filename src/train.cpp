@@ -4,9 +4,6 @@
 #include <../include/service/train.h>
 #include <../include/util/internal_utils.h>
 #include "STLite/list.hpp"
-#include "STLite/map.hpp"
-#include<climits>
-#include<algorithm>
 #include "STLite/unordered_map.hpp"
 
 namespace sjtu {
@@ -26,15 +23,62 @@ namespace sjtu {
         for (int i = 0; i < train.stationNum; ++i) {
             table.entries.push_back({hash_key(from_buffer(train.stations[i])), i});
         }
-        std::sort(table.entries.begin(), table.entries.end(), [](const StationLookupEntry &lhs,
-                                                                 const StationLookupEntry &rhs) {
-            if (lhs.hash != rhs.hash) {
-                return lhs.hash < rhs.hash;
+        if (!table.entries.empty()) {
+            for (size_t i = 1; i < table.entries.size(); ++i) {
+                StationLookupEntry value = table.entries[i];
+                size_t j = i;
+                while (j > 0) {
+                    const StationLookupEntry &prev = table.entries[j - 1];
+                    const bool less = value.hash != prev.hash ? value.hash < prev.hash : value.index < prev.index;
+                    if (!less) {
+                        break;
+                    }
+                    table.entries[j] = table.entries[j - 1];
+                    --j;
+                }
+                table.entries[j] = value;
             }
-            return lhs.index < rhs.index;
-        });
-        auto inserted = station_lookup_cache_.emplace(train_offset, std::move(table));
+        }
+        auto inserted = station_lookup_cache_.emplace(train_offset, sjtu::move(table));
         return inserted.first->second;
+    }
+
+    template <class T, class Compare>
+    void sift_down(T *data, size_t start, size_t count, Compare compare) {
+        size_t root = start;
+        while (true) {
+            const size_t left = root * 2 + 1;
+            if (left >= count) {
+                break;
+            }
+            size_t selected = root;
+            if (compare(data[selected], data[left])) {
+                selected = left;
+            }
+            const size_t right = left + 1;
+            if (right < count && compare(data[selected], data[right])) {
+                selected = right;
+            }
+            if (selected == root) {
+                break;
+            }
+            sjtu::swap(data[root], data[selected]);
+            root = selected;
+        }
+    }
+
+    template <class T, class Compare>
+    void heap_sort(T *data, size_t count, Compare compare) {
+        if (count <= 1) {
+            return;
+        }
+        for (size_t index = count / 2; index > 0; --index) {
+            sift_down(data, index - 1, count, compare);
+        }
+        for (size_t end = count - 1; end > 0; --end) {
+            sjtu::swap(data[0], data[end]);
+            sift_down(data, 0, end, compare);
+        }
     }
 
     void fill_ticket_result(const TrainRecord &train, int from_index, int to_index, int running_date, int seat, TicketQueryResult &result) {
@@ -148,7 +192,7 @@ namespace sjtu {
     }
 
     bool TrainService::find_train_offset(const std::string& train_id, int& train_offset) const {
-        Data probe(train_id, INT_MIN);
+        Data probe(train_id, kIntMin);
         Data result;
         if (!train_index_->lower_bound(probe, result)) {
             return false;
@@ -192,7 +236,7 @@ namespace sjtu {
     bool TrainService::get_existing_seat_record(int train_offset, int running_date, SeatRecord& seat_record,
                                                 int& seat_offset) const {
         const std::string key = make_seat_key(train_offset, running_date);
-        Data probe(key, INT_MIN);
+        Data probe(key, kIntMin);
         Data result;
         if (!seat_index_->lower_bound(probe, result)) {
             return false;
@@ -208,17 +252,22 @@ namespace sjtu {
                                       int& station_index) const {
         const unsigned long long target_hash = hash_key(station_name);
         const StationLookupTable &table = get_station_lookup_table(train_offset, train);
-        auto begin = table.entries.begin();
-        auto end = table.entries.end();
-        auto it = std::lower_bound(begin, end, target_hash, [](const StationLookupEntry &entry, unsigned long long value) {
-            return entry.hash < value;
-        });
-        while (it != end && it->hash == target_hash) {
-            if (from_buffer(train.stations[it->index]) == station_name) {
-                station_index = it->index;
+        size_t left = 0;
+        size_t right = table.entries.size();
+        while (left < right) {
+            const size_t mid = left + (right - left) / 2;
+            if (table.entries[mid].hash < target_hash) {
+                left = mid + 1;
+            } else {
+                right = mid;
+            }
+        }
+        while (left < table.entries.size() && table.entries[left].hash == target_hash) {
+            if (from_buffer(train.stations[table.entries[left].index]) == station_name) {
+                station_index = table.entries[left].index;
                 return true;
             }
-            ++it;
+            ++left;
         }
         return false;
     }
@@ -235,13 +284,13 @@ namespace sjtu {
     }
 
     int TrainService::query_min_remaining_seat(const SeatRecord& seat_record, int from_index, int to_index) {
-        int result = INT_MAX;
+        int result = kIntMax;
         for (int i = from_index; i < to_index; i++) {
             if (result > seat_record.remain[i]) {
                 result = seat_record.remain[i];
             }
         }
-        return result == INT_MAX ? 0 : result;
+        return result == kIntMax ? 0 : result;
     }
 
     bool TrainService::load_or_create_seat_record(int train_offset, int running_date, const sjtu::TrainRecord& train,
@@ -385,10 +434,10 @@ namespace sjtu {
 
         sjtu::vector<Data> from_matches;
         sjtu::vector<Data> to_matches;
-        station_index_->range_query(Data(request.from, INT_MIN), Data(request.from, INT_MAX), from_matches);
-        station_index_->range_query(Data(request.to, INT_MIN), Data(request.to, INT_MAX), to_matches);
+        station_index_->range_query(Data(request.from, kIntMin), Data(request.from, kIntMax), from_matches);
+        station_index_->range_query(Data(request.to, kIntMin), Data(request.to, kIntMax), to_matches);
 
-        results.reserve(std::min(from_matches.size(), to_matches.size()));
+        results.reserve(from_matches.size() < to_matches.size() ? from_matches.size() : to_matches.size());
 
         const bool enumerate_from = from_matches.size() <= to_matches.size();
         const sjtu::vector<Data> &candidate_matches = enumerate_from ? from_matches : to_matches;
@@ -415,7 +464,7 @@ namespace sjtu {
             results.push_back(item);
         };
 
-        for (std::size_t i = 0; i < candidate_matches.size(); ++i) {
+        for (size_t i = 0; i < candidate_matches.size(); ++i) {
             const int packed = candidate_matches[i].value;
             const int train_offset = unpack_train_offset(packed);
             const int source_idx = unpack_station_index(packed);
@@ -443,10 +492,10 @@ namespace sjtu {
 
         if (!results.empty()) {
             if (request.sort_policy == TicketSortPolicy::byCost) {
-                std::sort(&results[0], &results[0] + results.size(), compare_by_cost);
+                heap_sort(&results[0], results.size(), compare_by_cost);
             }
             if (request.sort_policy == TicketSortPolicy::byTime) {
-                std::sort(&results[0], &results[0] + results.size(), compare_by_time);
+                heap_sort(&results[0], results.size(), compare_by_time);
             }
         }
         return true;
@@ -457,8 +506,8 @@ namespace sjtu {
 
         sjtu::vector<Data> from_matches;
         sjtu::vector<Data> to_matches;
-        station_index_->range_query(Data(request.from, INT_MIN), Data(request.from, INT_MAX), from_matches);
-        station_index_->range_query(Data(request.to, INT_MIN), Data(request.to, INT_MAX), to_matches);
+        station_index_->range_query(Data(request.from, kIntMin), Data(request.from, kIntMax), from_matches);
+        station_index_->range_query(Data(request.to, kIntMin), Data(request.to, kIntMax), to_matches);
         if (from_matches.empty() || to_matches.empty()) {
             return false;
         }
@@ -472,7 +521,7 @@ namespace sjtu {
         sjtu::unordered_map<std::string, sjtu::vector<SecondLegCandidate>> second_by_station;
         second_by_station.reserve(to_matches.size() * 4 + 1);
 
-        constexpr std::size_t kTransferTrainCacheLimit = 64;
+        constexpr size_t kTransferTrainCacheLimit = 64;
         sjtu::list<sjtu::pair<int, TrainRecord>> train_cache_lru;
         sjtu::unordered_map<int, sjtu::list<sjtu::pair<int, TrainRecord>>::iterator> train_cache;
         train_cache.reserve(kTransferTrainCacheLimit);
@@ -490,14 +539,15 @@ namespace sjtu {
             train_cache_lru.emplace_front(train_offset, train);
             train_cache.emplace(train_offset, train_cache_lru.begin());
             if (train_cache_lru.size() > kTransferTrainCacheLimit) {
-                auto victim = std::prev(train_cache_lru.end());
+                auto victim = train_cache_lru.end();
+                --victim;
                 train_cache.erase(victim->first);
                 train_cache_lru.pop_back();
             }
             return true;
         };
 
-        for (std::size_t i = 0; i < to_matches.size(); ++i) {
+        for (size_t i = 0; i < to_matches.size(); ++i) {
             const int packed_second = to_matches[i].value;
             const int train2_offset = unpack_train_offset(packed_second);
 
@@ -517,7 +567,7 @@ namespace sjtu {
             }
         }
 
-        for (std::size_t index = 0; index < from_matches.size(); ++index) {
+        for (size_t index = 0; index < from_matches.size(); ++index) {
             const int packed_first = from_matches[index].value;
             const int train1_offset = unpack_train_offset(packed_first);
             const int from_index = unpack_station_index(packed_first);
@@ -554,7 +604,7 @@ namespace sjtu {
                 }
 
                 const sjtu::vector<SecondLegCandidate> &second_candidates = found_second->second;
-                for (std::size_t second_index = 0; second_index < second_candidates.size(); ++second_index) {
+                for (size_t second_index = 0; second_index < second_candidates.size(); ++second_index) {
                     const SecondLegCandidate &candidate_meta = second_candidates[second_index];
                     const int train2_offset = candidate_meta.train_offset;
                     const int transfer_index = candidate_meta.transfer_index;

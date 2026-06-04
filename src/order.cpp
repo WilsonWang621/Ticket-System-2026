@@ -2,7 +2,6 @@
 // Created by lenovo on 2026/5/29.
 //
 #include <../include/service/order.h>
-#include <climits>
 
 namespace sjtu {
 
@@ -166,7 +165,7 @@ namespace sjtu {
         }
 
         sjtu::vector<Data> order_entries;
-        user_order_index_->range_query(Data(username, INT_MIN), Data(username, INT_MAX), order_entries);
+        user_order_index_->range_query(Data(username, kIntMin), Data(username, kIntMax), order_entries);
         for (int index = static_cast<int>(order_entries.size()) - 1; index >= 0; --index) {
             OrderRecord order{};
             if (!order_file_.read(order_entries[index].value, order)) {
@@ -189,7 +188,7 @@ namespace sjtu {
         }
 
         sjtu::vector<Data> order_entries;
-        user_order_index_->range_query(Data(username, INT_MIN), Data(username, INT_MAX), order_entries);
+        user_order_index_->range_query(Data(username, kIntMin), Data(username, kIntMax), order_entries);
         if (n <= 0 || n > static_cast<int>(order_entries.size())) {
             return false;
         }
@@ -236,8 +235,8 @@ namespace sjtu {
         }
 
         sjtu::vector<Data> pending_orders;
-        pending_order_index_->range_query(Data(make_pending_key(train_id, running_date), INT_MIN),
-                                          Data(make_pending_key(train_id, running_date), INT_MAX),
+        pending_order_index_->range_query(Data(make_pending_key(train_id, running_date), kIntMin),
+                                          Data(make_pending_key(train_id, running_date), kIntMax),
                                           pending_orders);
         if (pending_orders.empty()) {
             return;

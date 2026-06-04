@@ -18,6 +18,7 @@ struct Data {
     int value = 0;
 
     Data() = default;
+    Data(const Data &other) : key(other.key), value(other.value) {}
     Data(const std::string &s, const int _value):value(_value){
         for (auto &ch : s) {
             key = (key * base + ch);

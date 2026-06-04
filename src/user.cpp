@@ -3,7 +3,6 @@
 //
 #include <../include/service/user.h>
 #include <../include/util/internal_utils.h>
-#include <climits>
 
 namespace {
     unsigned long long hash_key(const std::string &text) {
@@ -54,7 +53,7 @@ namespace sjtu {
         if (user_index_ == nullptr) {
             return false;
         }
-        Data probe(username, INT_MIN);
+        Data probe(username, kIntMin);
         Data result;
         if (!user_index_->lower_bound(probe, result)) {
             return false;

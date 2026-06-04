@@ -2,11 +2,9 @@
 #define SJTU_VECTOR_HPP
 
 #include "exceptions.hpp"
+#include "utility.hpp"
 
-#include <climits>
-#include <cstddef>
-#include <iterator>
-#include <utility>
+#include <cstdio>
 
 namespace sjtu
 { 
@@ -33,19 +31,12 @@ public:
 	// Type traits is a C++ feature for describing certain properties of a type.
 	// For instance, for an iterator, iterator::value_type is the type that the
 	// iterator points to.
-	// STL algorithms and containers may use these type_traits (e.g. the following
-	// typedef) to work properly. In particular, without the following code,
-	// @code{std::sort(iter, iter1);} would not compile.
-	// See these websites for more information:
-	// https://en.cppreference.com/w/cpp/header/type_traits
-	// About value_type: https://blog.csdn.net/u014299153/article/details/72419713
-	// About iterator_category: https://en.cppreference.com/w/cpp/iterator
 	public:
-		using difference_type = std::ptrdiff_t;
+		using difference_type = long long;
 		using value_type = T;
 		using pointer = T*;
 		using reference = T&;
-		using iterator_category = std::random_access_iterator_tag; 
+		using iterator_category = sjtu::random_access_iterator_tag; 
 
 	private:
 		/**
@@ -182,11 +173,11 @@ public:
 	class const_iterator
 	{
 	public:
-		using difference_type = std::ptrdiff_t;
+		using difference_type = long long;
 		using value_type = T;
 		using pointer = const T*;
 		using reference = const T&;
-		using iterator_category = std::random_access_iterator_tag;
+		using iterator_category = sjtu::random_access_iterator_tag;
 
 	private:
 		/*TODO*/
@@ -284,7 +275,7 @@ public:
             T* ptr = static_cast<T*>(::operator new(sizeof(T) * new_capacity));
 
             for(int i = 0; i < current_size; i++){
-                new (ptr + i) T(std::move(p[i]));
+                new (ptr + i) T(sjtu::move(p[i]));
             }
 
             for(int i = 0; i < current_size; i++){
@@ -348,14 +339,14 @@ public:
 	 * throw index_out_of_bound if pos is not in [0, size)
 	 */
 	T & at(const size_t &pos) {
-	    if(pos >= current_size || pos < 0){
+	    if(pos >= static_cast<size_t>(current_size)){
 	        throw index_out_of_bound();
 	    }
 
 	    return p[pos];
 	}
 	const T & at(const size_t &pos) const {
-	    if(pos >= current_size || pos < 0){
+	    if(pos >= static_cast<size_t>(current_size)){
 	        throw index_out_of_bound();
 	    }
 
@@ -368,14 +359,14 @@ public:
 	 *   In STL this operator does not check the boundary but I want you to do.
 	 */
 	T & operator[](const size_t &pos) {
-	    if(pos >= current_size || pos < 0){
+	    if(pos >= static_cast<size_t>(current_size)){
 	        throw index_out_of_bound();
 	    }
 
 	    return p[pos];
 	}
 	const T & operator[](const size_t &pos) const {
-	    if(pos >= current_size || pos < 0){
+	    if(pos >= static_cast<size_t>(current_size)){
 	        throw index_out_of_bound();
 	    }
 
@@ -458,7 +449,7 @@ public:
 	    }
 	    T* ptr = static_cast<T*>(::operator new(sizeof(T) * new_capacity));
 	    for(int i = 0; i < current_size; i++){
-	        new (ptr + i) T(std::move(p[i]));
+	        new (ptr + i) T(sjtu::move(p[i]));
 	    }
 	    for(int i = 0; i < current_size; i++){
 	        p[i].~T();
@@ -482,7 +473,7 @@ public:
 	 * throw index_out_of_bound if ind > size (in this situation ind can be size because after inserting the size will increase 1.)
 	 */
 	iterator insert(const size_t &ind, const T &value) {
-	    if(ind > current_size){
+	    if(ind > static_cast<size_t>(current_size)){
 	        throw index_out_of_bound();
 	    }
 
@@ -490,10 +481,10 @@ public:
 	        extend();
 	    }
 	    if (ind < current_size) {
-	        new (p + current_size) T(std::move(p[current_size - 1]));
+	        new (p + current_size) T(sjtu::move(p[current_size - 1]));
 
 	        for(int i = current_size - 1; i > ind; i--) {
-	            p[i] = std::move(p[i-1]);
+	            p[i] = sjtu::move(p[i-1]);
 	        }
 	    }
 
@@ -501,7 +492,7 @@ public:
 	        new (p + ind) T(value);
 	    } else {
 	        p[ind].~T();
-	        p[ind] = value;
+	        new (p + ind) T(value);
 	    }
 	    current_size++;
 	    return iterator(p + ind, this);
@@ -521,13 +512,13 @@ public:
 	 * throw index_out_of_bound if ind >= size
 	 */
 	iterator erase(const size_t &ind) {
-	    if(ind >= current_size){
+	    if(ind >= static_cast<size_t>(current_size)){
 	        throw index_out_of_bound();
 	    }
 
             p[ind].~T();
-	    for(int i = ind; i < current_size; i++){
-	        new (p + i) T(std::move(p[i+1]));
+	    for(int i = static_cast<int>(ind); i + 1 < current_size; i++){
+	        new (p + i) T(sjtu::move(p[i+1]));
 	        p[i+1].~T();
 	    }
 

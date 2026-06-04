@@ -9,7 +9,7 @@
 
 namespace sjtu {
 
-template<class Key, class T, class Compare = std::less<Key>>
+template<class Key, class T, class Compare = sjtu::less<Key>>
 class map {
 public:
     typedef pair<const Key, T> value_type;

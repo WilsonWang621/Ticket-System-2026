@@ -5,20 +5,23 @@
 #ifndef TICKET_SYSTEM_2026_1_INTERNAL_UTILS_H
 #define TICKET_SYSTEM_2026_1_INTERNAL_UTILS_H
 
+#include <cstdio>
 #include <string>
 #include "../model/data_types.h"
 
 namespace sjtu {
 
     constexpr int kMinutesPerDay = 24 * 60;
+    constexpr int kIntMin = -2147483647 - 1;
+    constexpr int kIntMax = 2147483647;
 
     inline std::string from_buffer(const char *buffer) {
         return {buffer};
     }
 
-    inline void copy_to_buffer(const std::string &src, char* target, std::size_t capcity) {
+    inline void copy_to_buffer(const std::string &src, char* target, size_t capcity) {
         if (capcity == 0) return;
-        std::size_t index = 0;
+        size_t index = 0;
         while (index + 1 < capcity && index < src.size()) {
             target[index] = src[index];
             index++;

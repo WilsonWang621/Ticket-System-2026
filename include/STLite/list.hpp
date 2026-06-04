@@ -2,10 +2,9 @@
 #define SJTU_LIST_HPP
 
 #include "exceptions.hpp"
+#include "utility.hpp"
 
-#include <cstddef>
-#include <iterator>
-#include <utility>
+#include <cstdio>
 
 namespace sjtu {
 
@@ -24,12 +23,12 @@ private:
         T value;
 
         template <class... Args>
-        explicit Node(Args &&...args) : value(std::forward<Args>(args)...) {
+        explicit Node(Args &&...args) : value(sjtu::forward<Args>(args)...) {
         }
     };
 
     NodeBase head;
-    std::size_t _size;
+    size_t _size;
 
     static Node *as_node(NodeBase *ptr) {
         return static_cast<Node *>(ptr);
@@ -70,11 +69,11 @@ public:
         list *owner;
 
     public:
-        using difference_type = std::ptrdiff_t;
+        using difference_type = long long;
         using value_type = T;
         using pointer = T *;
         using reference = T &;
-        using iterator_category = std::bidirectional_iterator_tag;
+        using iterator_category = sjtu::bidirectional_iterator_tag;
 
         iterator(NodeBase *p = nullptr, list *lst = nullptr) : ptr(p), owner(lst) {
         }
@@ -154,11 +153,11 @@ public:
         const list *owner;
 
     public:
-        using difference_type = std::ptrdiff_t;
+        using difference_type = long long;
         using value_type = T;
         using pointer = const T *;
         using reference = const T &;
-        using iterator_category = std::bidirectional_iterator_tag;
+        using iterator_category = sjtu::bidirectional_iterator_tag;
 
         const_iterator(const NodeBase *p = nullptr, const list *lst = nullptr) : ptr(p), owner(lst) {
         }
@@ -285,7 +284,7 @@ public:
         return _size == 0;
     }
 
-    std::size_t size() const {
+    size_t size() const {
         return _size;
     }
 
@@ -306,7 +305,7 @@ public:
     iterator emplace_front(Args &&...args) {
         Node *node = static_cast<Node *>(::operator new(sizeof(Node)));
         try {
-            new (node) Node(std::forward<Args>(args)...);
+            new (node) Node(sjtu::forward<Args>(args)...);
         } catch (...) {
             ::operator delete(node);
             throw;
@@ -324,7 +323,7 @@ public:
     iterator emplace_back(Args &&...args) {
         Node *node = static_cast<Node *>(::operator new(sizeof(Node)));
         try {
-            new (node) Node(std::forward<Args>(args)...);
+            new (node) Node(sjtu::forward<Args>(args)...);
         } catch (...) {
             ::operator delete(node);
             throw;

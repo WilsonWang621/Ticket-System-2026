@@ -2,10 +2,9 @@
 #define SJTU_PRIORITY_QUEUE_HPP
 
 #include <cmath>       // in case you need it
-#include <cstddef>     // for size_t
-#include <functional>  // for std::less
 
 #include "exceptions.hpp"
+#include "utility.hpp"
 
 namespace sjtu {
 
@@ -23,7 +22,7 @@ namespace sjtu {
  * Also, it does not support passing a comparator object as a constructor argument.
  *
  */
-template <class T, class Compare = std::less<T>>
+template <class T, class Compare = sjtu::less<T>>
 class priority_queue {
 private:
     struct Node {
@@ -64,7 +63,7 @@ private:
 
         try {
             if (cmp(r1->value, r2->value))
-                std::swap(r1, r2);
+                sjtu::swap(r1, r2);
         }
         catch (...) {
             throw;
@@ -72,7 +71,7 @@ private:
 
         r1->right = merge(r1->right, r2);
 
-        std::swap(r1->left, r1->right);
+        sjtu::swap(r1->left, r1->right);
 
         return r1;
     }
@@ -115,6 +114,8 @@ private:
             delete newNode;
             throw;
         }
+    }
+
     /**
      * Returns a read-only reference of the first element in the queue.
      *

@@ -2,7 +2,9 @@
 #define SJTU_DEQUE_HPP
 
 #include "exceptions.hpp"
-#include <cstddef>
+#include "utility.hpp"
+
+#include <cstdio>
 
 namespace sjtu {
 

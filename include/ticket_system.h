@@ -35,7 +35,7 @@ private:
     bool handle_query_order(const parsedCommand &command, sjtu::vector<std::string> &output_lines);
     bool handle_refund_ticket(const parsedCommand &command, sjtu::vector<std::string> &output_lines);
 
-    bool excute(parsedCommand &command, sjtu::vector<std::string> &output);
+    bool execute(parsedCommand &command, sjtu::vector<std::string> &output);
 
 };
 

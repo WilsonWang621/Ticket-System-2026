@@ -5,13 +5,11 @@
 #include "map.hpp"
 #include "utility.hpp"
 
-#include <cstddef>
-#include <functional>
-#include <utility>
+#include <cstdio>
 
 namespace sjtu {
 
-template <class Key, class T, class Hash = std::hash<Key>, class KeyEqual = std::equal_to<Key>>
+template <class Key, class T, class Hash = sjtu::hash<Key>, class KeyEqual = sjtu::equal_to<Key>>
 class unordered_map {
 public:
     using value_type = pair<const Key, T>;
@@ -20,32 +18,32 @@ private:
     using bucket_type = map<Key, T>;
 
     bucket_type *buckets;
-    std::size_t bucket_count;
-    std::size_t _size;
+    size_t bucket_count;
+    size_t _size;
     Hash hasher;
     KeyEqual equal;
 
-    std::size_t bucket_index(const Key &key) const {
+    size_t bucket_index(const Key &key) const {
         if (bucket_count == 0) {
             return 0;
         }
         return hasher(key) % bucket_count;
     }
 
-    void init(std::size_t count) {
+    void init(size_t count) {
         bucket_count = count == 0 ? 8 : count;
         buckets = new bucket_type[bucket_count];
         _size = 0;
     }
 
-    void rehash(std::size_t new_bucket_count) {
+    void rehash(size_t new_bucket_count) {
         if (new_bucket_count < 8) {
             new_bucket_count = 8;
         }
         bucket_type *new_buckets = new bucket_type[new_bucket_count];
-        for (std::size_t i = 0; i < bucket_count; ++i) {
+        for (size_t i = 0; i < bucket_count; ++i) {
             for (auto it = buckets[i].begin(); it != buckets[i].end(); ++it) {
-                const std::size_t idx = hasher(it->first) % new_bucket_count;
+                const size_t idx = hasher(it->first) % new_bucket_count;
                 new_buckets[idx].insert(*it);
             }
         }
@@ -54,7 +52,7 @@ private:
         bucket_count = new_bucket_count;
     }
 
-    void ensure_capacity(std::size_t needed_size) {
+    void ensure_capacity(size_t needed_size) {
         if (needed_size <= bucket_count * 2) {
             return;
         }
@@ -69,17 +67,17 @@ public:
         friend class const_iterator;
     private:
         unordered_map *owner;
-        std::size_t bucket;
+        size_t bucket;
         typename bucket_type::iterator it;
 
     public:
-        using difference_type = std::ptrdiff_t;
+        using difference_type = long long;
         using value_type = typename unordered_map::value_type;
         using pointer = value_type *;
         using reference = value_type &;
-        using iterator_category = std::bidirectional_iterator_tag;
+        using iterator_category = sjtu::bidirectional_iterator_tag;
 
-        iterator(unordered_map *map_ptr = nullptr, std::size_t bucket_idx = 0,
+        iterator(unordered_map *map_ptr = nullptr, size_t bucket_idx = 0,
                  typename bucket_type::iterator iter = typename bucket_type::iterator())
             : owner(map_ptr), bucket(bucket_idx), it(iter) {
         }
@@ -122,7 +120,7 @@ public:
                 if (owner->_size == 0) {
                     throw invalid_iterator();
                 }
-                std::size_t idx = owner->bucket_count;
+                size_t idx = owner->bucket_count;
                 while (idx > 0) {
                     --idx;
                     if (!owner->buckets[idx].empty()) {
@@ -135,7 +133,7 @@ public:
                 throw invalid_iterator();
             }
             if (it == owner->buckets[bucket].begin()) {
-                std::size_t idx = bucket;
+                size_t idx = bucket;
                 while (idx > 0) {
                     --idx;
                     if (!owner->buckets[idx].empty()) {
@@ -183,17 +181,17 @@ public:
         friend class iterator;
     private:
         const unordered_map *owner;
-        std::size_t bucket;
+        size_t bucket;
         typename bucket_type::const_iterator it;
 
     public:
-        using difference_type = std::ptrdiff_t;
+        using difference_type = long long;
         using value_type = typename unordered_map::value_type;
         using pointer = const value_type *;
         using reference = const value_type &;
-        using iterator_category = std::bidirectional_iterator_tag;
+        using iterator_category = sjtu::bidirectional_iterator_tag;
 
-        const_iterator(const unordered_map *map_ptr = nullptr, std::size_t bucket_idx = 0,
+        const_iterator(const unordered_map *map_ptr = nullptr, size_t bucket_idx = 0,
                        typename bucket_type::const_iterator iter = typename bucket_type::const_iterator())
             : owner(map_ptr), bucket(bucket_idx), it(iter) {
         }
@@ -239,7 +237,7 @@ public:
                 if (owner->_size == 0) {
                     throw invalid_iterator();
                 }
-                std::size_t idx = owner->bucket_count;
+                size_t idx = owner->bucket_count;
                 while (idx > 0) {
                     --idx;
                     if (!owner->buckets[idx].empty()) {
@@ -252,7 +250,7 @@ public:
                 throw invalid_iterator();
             }
             if (it == owner->buckets[bucket].begin()) {
-                std::size_t idx = bucket;
+                size_t idx = bucket;
                 while (idx > 0) {
                     --idx;
                     if (!owner->buckets[idx].empty()) {
@@ -306,7 +304,7 @@ public:
     unordered_map(const unordered_map &other)
         : buckets(nullptr), bucket_count(0), _size(0), hasher(other.hasher), equal(other.equal) {
         init(other.bucket_count);
-        for (std::size_t i = 0; i < other.bucket_count; ++i) {
+        for (size_t i = 0; i < other.bucket_count; ++i) {
             buckets[i] = other.buckets[i];
         }
         _size = other._size;
@@ -323,7 +321,7 @@ public:
         hasher = other.hasher;
         equal = other.equal;
         init(other.bucket_count);
-        for (std::size_t i = 0; i < other.bucket_count; ++i) {
+        for (size_t i = 0; i < other.bucket_count; ++i) {
             buckets[i] = other.buckets[i];
         }
         _size = other._size;
@@ -341,18 +339,18 @@ public:
         return _size == 0;
     }
 
-    std::size_t size() const {
+    size_t size() const {
         return _size;
     }
 
     void clear() {
-        for (std::size_t i = 0; i < bucket_count; ++i) {
+        for (size_t i = 0; i < bucket_count; ++i) {
             buckets[i].clear();
         }
         _size = 0;
     }
 
-    void reserve(std::size_t n) {
+    void reserve(size_t n) {
         if (n <= bucket_count) {
             return;
         }
@@ -360,7 +358,7 @@ public:
     }
 
     iterator begin() {
-        for (std::size_t i = 0; i < bucket_count; ++i) {
+        for (size_t i = 0; i < bucket_count; ++i) {
             if (!buckets[i].empty()) {
                 return iterator(this, i, buckets[i].begin());
             }
@@ -369,7 +367,7 @@ public:
     }
 
     const_iterator begin() const {
-        for (std::size_t i = 0; i < bucket_count; ++i) {
+        for (size_t i = 0; i < bucket_count; ++i) {
             if (!buckets[i].empty()) {
                 return const_iterator(this, i, buckets[i].begin());
             }
@@ -394,7 +392,7 @@ public:
     }
 
     iterator find(const Key &key) {
-        const std::size_t idx = bucket_index(key);
+        const size_t idx = bucket_index(key);
         auto it = buckets[idx].find(key);
         if (it == buckets[idx].end()) {
             return end();
@@ -403,7 +401,7 @@ public:
     }
 
     const_iterator find(const Key &key) const {
-        const std::size_t idx = bucket_index(key);
+        const size_t idx = bucket_index(key);
         auto it = buckets[idx].find(key);
         if (it == buckets[idx].end()) {
             return end();
@@ -414,12 +412,12 @@ public:
     template <class K, class V>
     pair<iterator, bool> emplace(K &&key, V &&value) {
         ensure_capacity(_size + 1);
-        const std::size_t idx = bucket_index(key);
+        const size_t idx = bucket_index(key);
         auto found = buckets[idx].find(key);
         if (found != buckets[idx].end()) {
             return pair<iterator, bool>(iterator(this, idx, found), false);
         }
-        auto inserted = buckets[idx].insert(value_type(std::forward<K>(key), std::forward<V>(value)));
+        auto inserted = buckets[idx].insert(value_type(sjtu::forward<K>(key), sjtu::forward<V>(value)));
         ++_size;
         return pair<iterator, bool>(iterator(this, idx, inserted.first), true);
     }
@@ -428,8 +426,8 @@ public:
         return emplace(v.first, v.second);
     }
 
-    std::size_t erase(const Key &key) {
-        const std::size_t idx = bucket_index(key);
+    size_t erase(const Key &key) {
+        const size_t idx = bucket_index(key);
         auto it = buckets[idx].find(key);
         if (it == buckets[idx].end()) {
             return 0;

@@ -6,7 +6,7 @@
 #include <util/internal_utils.h>
 
 namespace {
-    bool get_arg(const sjtu::parsedCommand &command, char name, std::string &value) {
+    bool get_arg(const sjtu::parsedCommand &command, char name, std::string &value) {  //匹配参数并获取对应value
         for (int i = 0; i < command.argument_count; ++i) {
             if (command.arguments[i].arg == name) {
                 value = command.arguments[i].value;
@@ -16,18 +16,18 @@ namespace {
         return false;
     }
 
-    std::string require_arg(const sjtu::parsedCommand &command, char name) {
+    std::string require_arg(const sjtu::parsedCommand &command, char name) {     //获取对应参数的value
         std::string value;
         get_arg(command, name, value);
         return value;
     }
 
-    bool has_arg(const sjtu::parsedCommand &command, char name) {
+    bool has_arg(const sjtu::parsedCommand &command, char name) {     //检查是否有目标参数类型
         std::string ignored;
         return get_arg(command, name, ignored);
     }
 
-    sjtu::vector<std::string> split_pipe(const std::string &text) {
+    sjtu::vector<std::string> split_pipe(const std::string &text) {    //分割 |
         sjtu::vector<std::string> result;
         std::string current;
         for (char ch : text) {
@@ -43,7 +43,7 @@ namespace {
         return result;
     }
 
-    sjtu::Date parse_date(const std::string &text) {
+    sjtu::Date parse_date(const std::string &text) {     // 把
         sjtu::Date date{};
         date.month = std::stoi(text.substr(0, 2));
         date.day = std::stoi(text.substr(3, 2));
@@ -389,7 +389,7 @@ namespace sjtu {
             return false;
         }
         output_lines.push_back(std::to_string(orders.size()));
-        for (int i = 0; i < orders.size(); i++) {
+        for (size_t i = 0; i < orders.size(); i++) {
             output_lines.push_back(format_order(orders[i]));
         }
         return false;
@@ -413,7 +413,7 @@ namespace sjtu {
         return false;
     }
 
-    bool TicketSystem::excute(parsedCommand& command, sjtu::vector<std::string> &output) {
+    bool TicketSystem::execute(parsedCommand& command, sjtu::vector<std::string> &output) {
         if (command.command_name == "add_user") return handle_add_user(command, output);
         if (command.command_name == "login") return handle_login(command, output);
         if (command.command_name == "logout") return handle_logout(command, output);
@@ -458,7 +458,7 @@ namespace sjtu {
             CommandParser::parsed(line, command);
 
             sjtu::vector<std::string> output;
-            const bool should_exit = excute(command, output);
+            const bool should_exit = execute(command, output);
             if (!output.empty()) {
                 std::cout << "[" << command.timestamp << "] " << output[0] << '\n';
                 for (int i = 1; i < static_cast<int>(output.size()); ++i) {
