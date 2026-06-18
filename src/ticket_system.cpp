@@ -465,6 +465,7 @@ namespace sjtu {
                 for (int i = 1; i < static_cast<int>(output.size()); ++i) {
                     std::cout << output[i] << '\n';
                 }
+                std::cout.flush();
             }
             if (should_exit) {
                 break;

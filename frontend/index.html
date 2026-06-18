@@ -1,0 +1,195 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Ticket System 2026</title>
+  <link rel="stylesheet" href="styles.css?v=3">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand">
+      <div class="brand-mark">TS</div>
+      <div>
+        <h1>Ticket System 2026</h1>
+        <p id="status" class="status-pill">正在连接后端...</p>
+      </div>
+    </div>
+    <div class="session">
+      <span id="sessionInfo">未登录</span>
+      <button id="logoutButton" class="secondary" hidden>退出登录</button>
+    </div>
+  </header>
+
+  <main id="authGate" class="auth">
+    <section class="auth-card">
+      <div class="section-head">
+        <div>
+          <h2 id="authTitle">登录</h2>
+          <p class="section-subtitle">进入售票控制台</p>
+        </div>
+        <div class="segmented">
+          <button class="active" data-auth-mode="login">登录</button>
+          <button data-auth-mode="register">创建账户</button>
+        </div>
+      </div>
+      <form id="loginForm" class="grid auth-grid">
+        <label>用户名 <input name="u" autocomplete="username" required></label>
+        <label>密码 <input name="p" type="password" autocomplete="current-password" required></label>
+        <button type="submit">登录</button>
+      </form>
+      <form id="registerForm" class="grid auth-grid" hidden>
+        <label>授权操作者 <input name="c" placeholder="系统已有用户时必填"></label>
+        <label>用户名 <input name="u" autocomplete="username" required></label>
+        <label>密码 <input name="p" type="password" autocomplete="new-password" required></label>
+        <label>姓名 <input name="n" required></label>
+        <label>邮箱 <input name="m" type="email" required></label>
+        <label>权限 <input name="g" type="number" min="1" max="10" value="1" required></label>
+        <button type="submit">创建并登录</button>
+      </form>
+      <p id="authMessage" class="message"></p>
+    </section>
+  </main>
+
+  <main id="appShell" class="layout" hidden>
+    <nav class="tabs" aria-label="功能导航">
+      <button class="active" data-tab="tickets"><span>车票查询</span></button>
+      <button data-tab="orders"><span>订单</span></button>
+      <button data-tab="users"><span>用户</span></button>
+      <button data-tab="trains"><span>车次管理</span></button>
+      <button data-tab="ops"><span>系统</span></button>
+    </nav>
+
+    <section class="workspace">
+      <section id="tickets" class="panel active">
+        <div class="section-head">
+          <div>
+            <h2>车票查询与购票</h2>
+            <p class="section-subtitle">按站点、日期和策略筛选可售车票</p>
+          </div>
+          <div class="segmented">
+            <button class="active" data-query-mode="direct">直达</button>
+            <button data-query-mode="transfer">换乘</button>
+          </div>
+        </div>
+        <form data-command="query_ticket" data-kind="ticket-query" class="grid compact">
+          <label>出发站 <input name="s" required></label>
+          <label>到达站 <input name="t" required></label>
+          <label>日期 MM-DD <input name="d" data-format="date" inputmode="numeric" maxlength="5" placeholder="06-01" title="请输入 MM-DD，例如 06-01" required></label>
+          <label>排序
+            <select name="p">
+              <option value="time">时间优先</option>
+              <option value="cost">价格优先</option>
+            </select>
+          </label>
+          <button type="submit">查询</button>
+        </form>
+        <div id="ticketResults" class="result-list"></div>
+      </section>
+
+      <section id="orders" class="panel">
+        <div class="section-head"><div><h2>订单管理</h2><p class="section-subtitle">查询订单与处理退票</p></div></div>
+        <form data-command="query_order" class="grid compact">
+          <label>用户名 <input name="u" data-user-field required></label>
+          <button type="submit">查询订单</button>
+        </form>
+        <form data-command="refund_ticket" class="grid compact">
+          <label>用户名 <input name="u" data-user-field required></label>
+          <label>订单序号 <input name="n" type="number" min="1" placeholder="1"></label>
+          <button type="submit">退票</button>
+        </form>
+      </section>
+
+      <section id="users" class="panel">
+        <div class="section-head"><div><h2>用户操作</h2><p class="section-subtitle">维护账户资料和权限</p></div></div>
+        <form data-command="add_user" class="grid staff-only">
+          <label>操作者 <input name="c" data-user-field></label>
+          <label>用户名 <input name="u" required></label>
+          <label>密码 <input name="p" type="password" required></label>
+          <label>姓名 <input name="n" required></label>
+          <label>邮箱 <input name="m" type="email" required></label>
+          <label>权限 <input name="g" type="number" min="1" max="10" value="1" required></label>
+          <button type="submit">添加用户</button>
+        </form>
+        <form data-command="query_profile" class="grid compact">
+          <label>操作者 <input name="c" data-user-field required></label>
+          <label>查询用户 <input name="u" required></label>
+          <button type="submit">查询资料</button>
+        </form>
+        <form data-command="modify_profile" class="grid">
+          <label>操作者 <input name="c" data-user-field required></label>
+          <label>目标用户 <input name="u" required></label>
+          <label>新密码 <input name="p" type="password"></label>
+          <label>新姓名 <input name="n"></label>
+          <label>新邮箱 <input name="m" type="email"></label>
+          <label>新权限 <input name="g" type="number" min="1" max="10"></label>
+          <button type="submit">修改资料</button>
+        </form>
+      </section>
+
+      <section id="trains" class="panel">
+        <div class="section-head"><div><h2>车次管理</h2><p class="section-subtitle">添加、发布、删除和查询车次</p></div></div>
+        <form data-command="add_train" class="grid wide staff-only">
+          <label>车次 ID <input name="i" required></label>
+          <label>站点数 <input name="n" type="number" min="2" required></label>
+          <label>座位数 <input name="m" type="number" min="1" required></label>
+          <label>站点 <input name="s" placeholder="A|B|C" required></label>
+          <label>票价 <input name="p" placeholder="10|20" required></label>
+          <label>发车时间 HH:MM <input name="x" data-format="time" inputmode="numeric" maxlength="5" placeholder="08:00" title="请输入 HH:MM，例如 08:00" required></label>
+          <label>行驶时间 <input name="t" placeholder="60|90" required></label>
+          <label>停站时间 <input name="o" placeholder="5"></label>
+          <label>售卖日期 MM-DD|MM-DD <input name="d" data-format="date-range" inputmode="numeric" maxlength="11" placeholder="06-01|06-30" title="请输入 MM-DD|MM-DD，例如 06-01|06-30" required></label>
+          <label>类型 <input name="y" maxlength="1" required></label>
+          <button type="submit">添加车次</button>
+        </form>
+        <form data-command="query_train" class="grid compact">
+          <label>车次 ID <input name="i" required></label>
+          <label>日期 MM-DD <input name="d" data-format="date" inputmode="numeric" maxlength="5" placeholder="06-01" title="请输入 MM-DD，例如 06-01" required></label>
+          <button type="submit">查询车次</button>
+        </form>
+        <form data-command="release_train" class="grid compact staff-only">
+          <label>车次 ID <input name="i" required></label>
+          <button type="submit">发布车次</button>
+        </form>
+        <form data-command="delete_train" class="grid compact staff-only">
+          <label>车次 ID <input name="i" required></label>
+          <button type="submit">删除车次</button>
+        </form>
+      </section>
+
+      <section id="ops" class="panel">
+        <div class="section-head"><div><h2>系统维护</h2><p class="section-subtitle">仅管理员可执行</p></div></div>
+        <div class="actions staff-only">
+          <button class="danger" data-system-command="clean">清空数据</button>
+          <button data-admin-action="restart-backend">重启后端数据服务</button>
+          <button data-admin-action="shutdown">优雅关闭 Web 与后端</button>
+        </div>
+      </section>
+    </section>
+
+    <aside class="output">
+      <div class="section-head"><h2>执行结果</h2><button id="clearLog">清空</button></div>
+      <pre id="log"></pre>
+    </aside>
+  </main>
+
+  <dialog id="buyDialog">
+    <form method="dialog" id="buyForm">
+      <h2>购票</h2>
+      <input type="hidden" name="i">
+      <input type="hidden" name="f">
+      <input type="hidden" name="t">
+      <input type="hidden" name="d">
+      <label>用户名 <input name="u" data-user-field required></label>
+      <label>数量 <input name="n" type="number" min="1" value="1" required></label>
+      <label class="checkbox"><input name="q" type="checkbox"> 余票不足时加入候补</label>
+      <menu>
+        <button value="cancel">取消</button>
+        <button value="buy">购票</button>
+      </menu>
+    </form>
+  </dialog>
+
+  <script src="app.js?v=3"></script>
+</body>
+</html>
